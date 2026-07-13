@@ -10,6 +10,21 @@ pub fn scan(source: String) -> Nil {
   io.println(string.inspect(tokens))
 }
 
+fn panic_with_char(char: String, line: int) -> List(Token) {
+  io.println(
+    "Encountered unknown character: '"
+    <> char
+    <> "' "
+    <> "on line "
+    <> string.inspect(line),
+  )
+  panic
+}
+
+fn panic_with_unreachable() -> List(Token) {
+  panic as "unreachable"
+}
+
 fn scan_(chars: List(String), tokens: List(Token), i: Int) -> List(Token) {
   let make_token = fn(tt, lex) { Token(tt, lex, "", i) }
   case chars {
@@ -18,7 +33,22 @@ fn scan_(chars: List(String), tokens: List(Token), i: Int) -> List(Token) {
       let eof = Token(token.Eof, "", "", i)
       list.reverse([eof, ..tokens])
     }
-    // Single Char 
+    // Multi Char Symbol
+    [hd, hd2, ..rest] as c -> {
+      let make_token_and_continue = fn(tt) {
+        let t = make_token(tt, hd <> hd2)
+        scan_(rest, [t, ..tokens], i)
+      }
+      case c {
+        ["!", "=", ..] -> make_token_and_continue(token.BangEqual)
+        ["=", "=", ..] -> make_token_and_continue(token.EqualEqual)
+        ["<", "=", ..] -> make_token_and_continue(token.LessEqual)
+        [">", "=", ..] -> make_token_and_continue(token.GreaterEqual)
+        [hd, ..] -> panic_with_char(hd, i)
+        [] -> panic_with_unreachable()
+      }
+    }
+    // Single Char  Symbol
     [hd, ..rest] as c -> {
       let make_token_and_continue = fn(tt) {
         let t = make_token(tt, hd)
@@ -58,17 +88,22 @@ fn scan_(chars: List(String), tokens: List(Token), i: Int) -> List(Token) {
         ["*", ..] -> {
           make_token_and_continue(token.Star)
         }
-        [hd, ..] -> {
-          io.println(
-            "Encountered unknown character: '"
-            <> hd
-            <> "' "
-            <> "on line "
-            <> string.inspect(i),
-          )
-          panic
+        // Possibly Multi
+        ["!", ..] -> {
+          make_token_and_continue(token.Bang)
         }
-        [] -> panic as "unreachable"
+        ["=", ..] -> {
+          make_token_and_continue(token.Equal)
+        }
+        ["<", ..] -> {
+          make_token_and_continue(token.Less)
+        }
+        [">", ..] -> {
+          make_token_and_continue(token.Greater)
+        }
+        // this is an example of code smell
+        [hd, ..] -> panic_with_char(hd, i)
+        [] -> panic_with_unreachable()
       }
     }
   }
