@@ -38,7 +38,7 @@ fn scan_(chars: List(String), tokens: List(Token), i: Int) -> List(Token) {
           make_token_and_continue(token.LeftBrace)
         }
         ["}", ..] -> {
-          make_token_and_continue(token.LeftBrace)
+          make_token_and_continue(token.RightBrace)
         }
         [",", ..] -> {
           make_token_and_continue(token.Comma)
