@@ -55,52 +55,22 @@ fn scan_(chars: List(String), tokens: List(Token), i: Int) -> List(Token) {
         scan_(rest, [t, ..tokens], i)
       }
       case c {
-        ["\n", ..] -> {
-          scan_(rest, tokens, i + 1)
-        }
-        ["(", ..] -> {
-          make_token_and_continue(token.LeftParen)
-        }
-        [")", ..] -> {
-          make_token_and_continue(token.RightParen)
-        }
-        ["{", ..] -> {
-          make_token_and_continue(token.LeftBrace)
-        }
-        ["}", ..] -> {
-          make_token_and_continue(token.RightBrace)
-        }
-        [",", ..] -> {
-          make_token_and_continue(token.Comma)
-        }
-        [".", ..] -> {
-          make_token_and_continue(token.Dot)
-        }
-        ["-", ..] -> {
-          make_token_and_continue(token.Minus)
-        }
-        ["+", ..] -> {
-          make_token_and_continue(token.Plus)
-        }
-        [";", ..] -> {
-          make_token_and_continue(token.Semicolon)
-        }
-        ["*", ..] -> {
-          make_token_and_continue(token.Star)
-        }
+        ["\n", ..] -> scan_(rest, tokens, i + 1)
+        ["(", ..] -> make_token_and_continue(token.LeftParen)
+        [")", ..] -> make_token_and_continue(token.RightParen)
+        ["{", ..] -> make_token_and_continue(token.LeftBrace)
+        ["}", ..] -> make_token_and_continue(token.RightBrace)
+        [",", ..] -> make_token_and_continue(token.Comma)
+        [".", ..] -> make_token_and_continue(token.Dot)
+        ["-", ..] -> make_token_and_continue(token.Minus)
+        ["+", ..] -> make_token_and_continue(token.Plus)
+        [";", ..] -> make_token_and_continue(token.Semicolon)
+        ["*", ..] -> make_token_and_continue(token.Star)
         // Possibly Multi
-        ["!", ..] -> {
-          make_token_and_continue(token.Bang)
-        }
-        ["=", ..] -> {
-          make_token_and_continue(token.Equal)
-        }
-        ["<", ..] -> {
-          make_token_and_continue(token.Less)
-        }
-        [">", ..] -> {
-          make_token_and_continue(token.Greater)
-        }
+        ["!", ..] -> make_token_and_continue(token.Bang)
+        ["=", ..] -> make_token_and_continue(token.Bang)
+        ["<", ..] -> make_token_and_continue(token.Less)
+        [">", ..] -> make_token_and_continue(token.Greater)
         // this is an example of code smell
         [hd, ..] -> panic_with_char(hd, i)
         [] -> panic_with_unreachable()
