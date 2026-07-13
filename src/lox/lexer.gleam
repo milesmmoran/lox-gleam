@@ -1,5 +1,5 @@
 import gleam/io
 
-pub fn lexer() -> Nil {
-  io.print("hi")
+pub fn lexer(source: String) -> Nil {
+  io.print(source)
 }
