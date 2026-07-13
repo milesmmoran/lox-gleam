@@ -26,5 +26,5 @@ fn run_file(path: String) -> Nil {
 
 fn run(source: String) -> Nil {
   io.println(source)
-  let _tokens = lexer.lexer(source)
+  let _tokens = lexer.scan(source)
 }
