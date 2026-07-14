@@ -9,32 +9,47 @@ pub fn scan(source: String) -> Nil {
   io.println(string.inspect(tokens))
 }
 
-fn skip_line(chars: String) -> String {
+fn scan_comment(chars: String) -> String {
   case chars {
     "" -> ""
     "\n" <> rest -> rest
     _ -> {
       case string.pop_grapheme(chars) {
-        Ok(#(_, rest)) -> skip_line(rest)
+        Ok(#(_, rest)) -> scan_comment(rest)
         Error(_) -> ""
       }
     }
   }
 }
 
-fn scan_string(chars: String, literal: String) -> #(String, String) {
+fn scan_string_literal(chars: String, literal: String) -> #(String, String) {
   case chars {
     "\"" <> r -> #(string.reverse(literal), r)
     _ -> {
       case string.pop_grapheme(chars) {
-        Ok(#(char, r)) -> scan_string(r, char <> literal)
+        Ok(#(char, r)) -> scan_string_literal(r, char <> literal)
         Error(_) -> panic as "unreachable"
       }
     }
   }
 }
 
-fn scan_number(
+fn scan_keyword_or_identifier(
+  chars: String,
+  literal: String,
+) -> #(String, String) {
+  case chars {
+    "\"" <> r -> #(string.reverse(literal), r)
+    _ -> {
+      case string.pop_grapheme(chars) {
+        Ok(#(char, r)) -> scan_string_literal(r, char <> literal)
+        Error(_) -> panic as "unreachable"
+      }
+    }
+  }
+}
+
+fn scan_number_literal(
   chars: String,
   literal: String,
   contains_period: Bool,
@@ -43,13 +58,13 @@ fn scan_number(
   case chars, contains_period {
     "", _ -> finish_lex("")
     "." <> _, True -> panic as "unexpected period"
-    "." <> r, False -> scan_number(r, "." <> literal, True)
+    "." <> r, False -> scan_number_literal(r, "." <> literal, True)
     _, _ -> {
       case string.pop_grapheme(chars) {
         Ok(#(hd, r)) -> {
           let is_number = utils.is_number(hd)
           case is_number {
-            True -> scan_number(r, hd <> chars, contains_period)
+            True -> scan_number_literal(r, hd <> chars, contains_period)
             _ -> finish_lex(r)
           }
         }
@@ -77,7 +92,7 @@ fn scan_(chars: String, tokens: List(Token), i: Int) -> List(Token) {
     "==" as c <> rest -> make_token_and_continue(token.EqualEqual, c, rest)
     "<=" as c <> rest -> make_token_and_continue(token.LessEqual, c, rest)
     ">=" as c <> rest -> make_token_and_continue(token.GreaterEqual, c, rest)
-    "//" <> rest -> new_line(skip_line(rest))
+    "//" <> rest -> new_line(scan_comment(rest))
     "\n" <> rest -> new_line(rest)
     // Whitespace
     " " <> rest -> skip_char(rest)
@@ -100,7 +115,7 @@ fn scan_(chars: String, tokens: List(Token), i: Int) -> List(Token) {
     ">" as c <> rest -> make_token_and_continue(token.Greater, c, rest)
     "/" as c <> rest -> make_token_and_continue(token.Slash, c, rest)
     "\"" <> rest -> {
-      let #(string_literal, rest) = scan_string("", rest)
+      let #(string_literal, rest) = scan_string_literal("", rest)
       make_token_and_continue(token.String, string_literal, rest)
     }
     _ -> {
@@ -110,11 +125,18 @@ fn scan_(chars: String, tokens: List(Token), i: Int) -> List(Token) {
           let is_letter = utils.is_letter(hd)
           case is_number, is_letter {
             True, _ -> {
-              let #(number, rest) = scan_number(r, hd, False)
+              let #(number, rest) = scan_number_literal(r, hd, False)
               make_token_and_continue(token.Number, number, rest)
             }
             _, False -> {
-              []
+              let #(keyword_or_identifier, rest) =
+                scan_keyword_or_identifier(r, hd)
+              // todo hashmap lookup
+              make_token_and_continue(
+                token.Identifier,
+                keyword_or_identifier,
+                rest,
+              )
             }
             _, _ -> panic as "unreachable"
           }
