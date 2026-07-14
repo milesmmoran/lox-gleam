@@ -64,6 +64,59 @@ fn lex_number(
   }
 }
 
+fn lex_identifier(
+  chars: List(String),
+  literal: List(String),
+  contains_period: Bool,
+) -> #(List(String), List(String)) {
+  let finish_lex = fn(r) { #(list.reverse(literal), r) }
+  case chars, contains_period {
+    [hd, ..r], p -> {
+      case hd {
+        // TODO 
+        "0"
+        | "1"
+        | "2"
+        | "3"
+        | "4"
+        | "5"
+        | "6"
+        | "7"
+        | "8"
+        | "9"
+        | "a"
+        | "b"
+        | "c"
+        | "d"
+        | "e"
+        | "f"
+        | "g"
+        | "h"
+        | "i"
+        | "j"
+        | "k"
+        | "l"
+        | "m"
+        | "n"
+        | "o"
+        | "p"
+        | "q"
+        | "r"
+        | "s"
+        | "t"
+        | "u"
+        | "v"
+        | "w"
+        | "x"
+        | "y"
+        | "z" -> lex_identifier(r, [hd, ..literal], p)
+        _ -> finish_lex(chars)
+      }
+    }
+    [], _ -> finish_lex([])
+  }
+}
+
 fn scan_(chars: List(String), tokens: List(Token), i: Int) -> List(Token) {
   let make_token = fn(tt, lex) { Token(tt, lex, "", i) }
   case chars {
@@ -76,7 +129,7 @@ fn scan_(chars: List(String), tokens: List(Token), i: Int) -> List(Token) {
       let new_line = fn(remaining: List(String)) {
         scan_(remaining, tokens, i + 1)
       }
-      let skip_char = fn() { scan_(rest, tokens, i + 1) }
+      let skip_char = fn() { scan_(rest, tokens, i) }
       let make_token_and_continue = fn(tt) {
         let t = make_token(tt, hd)
         scan_(rest, [t, ..tokens], i)
@@ -149,7 +202,6 @@ fn scan_(chars: List(String), tokens: List(Token), i: Int) -> List(Token) {
           // Number Literal
           case hd {
             "0" | "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9" -> {
-              io.print("here")
               let #(literal, rest) = lex_number(r, [hd], False)
               make_tokens_and_continue(
                 token.Number,
@@ -157,9 +209,40 @@ fn scan_(chars: List(String), tokens: List(Token), i: Int) -> List(Token) {
                 rest,
               )
             }
-            "a" -> {
+            // alphabetical first
+            "a"
+            | "b"
+            | "c"
+            | "d"
+            | "e"
+            | "f"
+            | "g"
+            | "h"
+            | "i"
+            | "j"
+            | "k"
+            | "l"
+            | "m"
+            | "n"
+            | "o"
+            | "p"
+            | "q"
+            | "r"
+            | "s"
+            | "t"
+            | "u"
+            | "v"
+            | "w"
+            | "x"
+            | "y"
+            | "z" -> {
               // Identifiers
-              todo
+              let #(literal, rest) = lex_identifier(r, [hd], False)
+              make_tokens_and_continue(
+                token.Identifier,
+                string.concat(literal),
+                rest,
+              )
             }
             _ -> panic_with_char(hd, i)
           }
