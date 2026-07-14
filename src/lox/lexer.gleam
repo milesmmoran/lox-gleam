@@ -141,6 +141,7 @@ fn scan_(chars: List(String), tokens: List(Token), i: Int) -> List(Token) {
       }
       case c {
         // Keywords
+        // TODO: MOVE
         ["a", "n", "d", ..r] -> make_tokens_and_continue(token.And, "and", r)
         ["c", "l", "a", "s", "s", ..r] ->
           make_tokens_and_continue(token.Class, "class", r)
