@@ -1,3 +1,4 @@
+import gleam/dict
 import gleam/io
 import gleam/list
 import gleam/string
@@ -131,7 +132,19 @@ fn scan_(chars: String, tokens: List(Token), i: Int) -> List(Token) {
             _, False -> {
               let #(keyword_or_identifier, rest) =
                 scan_keyword_or_identifier(r, hd)
-              // todo hashmap lookup
+              // TODO: Move and flesh out keyword map
+              let keyword_map = dict.from_list([#("and", token.And)])
+              let keyword = dict.get(keyword_map, keyword_or_identifier)
+              case keyword {
+                Ok(keyword) ->
+                  make_token_and_continue(keyword, keyword_or_identifier, rest)
+                _ ->
+                  make_token_and_continue(
+                    token.Identifier,
+                    keyword_or_identifier,
+                    rest,
+                  )
+              }
               make_token_and_continue(
                 token.Identifier,
                 keyword_or_identifier,
