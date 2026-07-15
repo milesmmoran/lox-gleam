@@ -196,7 +196,7 @@ fn tokenize(lex_state: LexState) -> LexResult {
                 rest,
               )
             }
-            _, _ -> todo
+            _, _ -> panic as "idk1"
             // tokenize(
             //   LexState(r, tokens, line_number, [
             //     LexError("bad", line_number),
@@ -205,7 +205,7 @@ fn tokenize(lex_state: LexState) -> LexResult {
             // )
           }
         }
-        Error(_) -> todo
+        Error(_) -> panic as "idk2"
       }
     }
   }
