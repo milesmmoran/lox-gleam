@@ -1,7 +1,9 @@
 import gleam/dict
 import gleam/io
 import gleam/list
+import gleam/option.{type Option, None, Some}
 import gleam/string
+import lox/constants
 import lox/token.{type Token, Token}
 import lox/utils
 
@@ -78,7 +80,15 @@ fn scan_number_literal(
   }
 }
 
-fn scan_(chars: String, tokens: List(Token), i: Int) -> List(Token) {
+pub type LexError {
+  LexError(message: String, line_number: Int)
+}
+
+pub type LexResult {
+  LexResult(tokens: List(Token), error_message: Option(LexError))
+}
+
+fn scan_(chars: String, tokens: List(Token), i: Int) -> LexResult {
   let make_token = fn(tt, lex) { Token(tt, lex, "", i) }
   let make_token_and_continue = fn(tt, lex, remaining) {
     let t = make_token(tt, lex)
@@ -86,11 +96,14 @@ fn scan_(chars: String, tokens: List(Token), i: Int) -> List(Token) {
   }
   let new_line = fn(rest: String) { scan_(rest, tokens, i + 1) }
   let skip_char = fn(rest: String) { scan_(rest, tokens, i) }
+  let throw_error = fn(error_message: String) {
+    LexResult(list.reverse(tokens), Some(LexError(error_message, i)))
+  }
   case chars {
     // EOF of file
     "" -> {
       let eof = Token(token.Eof, "", "", i)
-      list.reverse([eof, ..tokens])
+      LexResult(list.reverse([eof, ..tokens]), None)
     }
     "!=" as c <> rest -> make_token_and_continue(token.BangEqual, c, rest)
     "==" as c <> rest -> make_token_and_continue(token.EqualEqual, c, rest)
@@ -135,8 +148,7 @@ fn scan_(chars: String, tokens: List(Token), i: Int) -> List(Token) {
             _, False -> {
               let #(keyword_or_identifier, rest) =
                 scan_keyword_or_identifier(r, hd)
-              // TODO: Move and flesh out keyword map
-              let keyword_map = dict.from_list([#("and", token.And)])
+              let keyword_map = constants.get_keyword_map()
               let keyword = dict.get(keyword_map, keyword_or_identifier)
               case keyword {
                 Ok(keyword) ->
@@ -154,11 +166,12 @@ fn scan_(chars: String, tokens: List(Token), i: Int) -> List(Token) {
                 rest,
               )
             }
-            _, _ -> panic as "unreachable"
+            _, _ -> throw_error("Unknown Error")
           }
         }
-        Error(_) -> panic as "unreachable"
+        Error(_) -> throw_error("Unkown Error")
       }
     }
   }
 }
+// So, the issue i'm experiencing now, is error handling doesn't feel great, with these panics. I want to use a clojure, but can't recurse.
