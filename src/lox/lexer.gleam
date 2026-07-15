@@ -57,6 +57,7 @@ fn scan_keyword_or_identifier(
     // Whitespace variations?
     " " <> r -> finish_lex(r)
     _ -> {
+      io.println("hi")
       case string.pop_grapheme(source) {
         Ok(#(char, r)) ->
           scan_string_literal(
