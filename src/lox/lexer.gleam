@@ -172,7 +172,7 @@ fn tokenize(lex_state: LexState) -> LexResult {
               let #(number, rest) = scan_number_literal(r, hd, False)
               make_token_and_continue(token.Number, number, rest)
             }
-            _, False -> {
+            _, True -> {
               let #(keyword_or_identifier, rest) =
                 scan_keyword_or_identifier(
                   LexState(r, tokens, line_number, errors),
@@ -196,7 +196,10 @@ fn tokenize(lex_state: LexState) -> LexResult {
                 rest,
               )
             }
-            _, _ -> panic as "idk1"
+            _, _ -> {
+              io.println(hd)
+              panic as "idk1"
+            }
             // tokenize(
             //   LexState(r, tokens, line_number, [
             //     LexError("bad", line_number),
