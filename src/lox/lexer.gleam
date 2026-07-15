@@ -11,28 +11,30 @@ pub fn scan(source: String) -> Nil {
   io.println(string.inspect(tokens))
 }
 
-fn scan_comment(lex_state: LexState) -> String {
+fn scan_comment(lex_state: LexState) -> LexState {
   let LexState(source:, tokens:, line_number:, errors:) = lex_state
   case source {
-    "" -> ""
-    "\n" <> rest -> rest
+    "" -> LexState("", tokens, line_number + 1, errors)
+    "\n" <> rest -> LexState(rest, tokens, line_number + 1, errors)
     _ -> {
       case string.pop_grapheme(source) {
         Ok(#(_, rest)) ->
           scan_comment(LexState(rest, tokens, line_number, errors))
-        Error(_) -> ""
+        Error(_) -> panic as "impossible"
       }
     }
   }
 }
 
-fn scan_string_literal(
-  lex_state: LexState,
-  literal: String,
-) -> #(String, String) {
+fn scan_string_literal(lex_state: LexState, literal: String) -> LexState {
   let LexState(source:, tokens:, line_number:, errors:) = lex_state
   case source {
-    "\"" <> r -> #(string.reverse(literal), r)
+    "\"" <> r -> {
+      let string_literal = string.reverse(literal)
+      let token =
+        Token(token.String, string_literal, string_literal, line_number)
+      LexState(r, [token, ..tokens], line_number, errors)
+    }
     _ -> {
       case string.pop_grapheme(source) {
         Ok(#(char, r)) ->
@@ -49,18 +51,22 @@ fn scan_string_literal(
 fn scan_keyword_or_identifier(
   lex_state: LexState,
   literal: String,
-) -> #(String, String) {
+) -> LexState {
   let LexState(source:, tokens:, line_number:, errors:) = lex_state
-  let finish_lex = fn(r) { #(string.reverse(literal), r) }
   case source {
-    "\"" <> r -> finish_lex(r)
-    // Whitespace variations?
-    " " <> r -> finish_lex(r)
+    "" <> r -> {
+      let keyword_map = constants.get_keyword_map()
+      let keyword = dict.get(keyword_map, literal)
+      let token = case keyword {
+        Ok(keyword) -> Token(keyword, literal, literal, line_number)
+        _ -> Token(token.Identifier, literal, literal, line_number)
+      }
+      LexState(r, [token, ..tokens], line_number, errors)
+    }
     _ -> {
-      io.println("hi")
       case string.pop_grapheme(source) {
         Ok(#(char, r)) ->
-          scan_string_literal(
+          scan_keyword_or_identifier(
             LexState(r, tokens, line_number, errors),
             char <> literal,
           )
@@ -71,22 +77,38 @@ fn scan_keyword_or_identifier(
 }
 
 fn scan_number_literal(
-  chars: String,
+  lex_state: LexState,
   literal: String,
   contains_period: Bool,
-) -> #(String, String) {
-  let finish_lex = fn(r) { #(string.reverse(literal), r) }
-  case chars, contains_period {
-    "", _ -> finish_lex("")
+) -> LexState {
+  let LexState(source:, tokens:, line_number:, errors:) = lex_state
+  case source, contains_period {
+    "", _ -> {
+      let token = Token(token.Number, literal, literal, line_number)
+      LexState("", [token, ..tokens], line_number, errors)
+    }
     "." <> _, True -> panic as "unexpected period"
-    "." <> r, False -> scan_number_literal(r, "." <> literal, True)
+    "." <> r, False ->
+      scan_number_literal(
+        LexState(r, tokens, line_number, errors),
+        "." <> literal,
+        True,
+      )
     _, _ -> {
-      case string.pop_grapheme(chars) {
+      case string.pop_grapheme(source) {
         Ok(#(hd, r)) -> {
           let is_number = utils.is_number(hd)
           case is_number {
-            True -> scan_number_literal(r, hd <> chars, contains_period)
-            _ -> finish_lex(r)
+            True ->
+              scan_number_literal(
+                LexState(r, tokens, line_number, errors),
+                hd <> literal,
+                contains_period,
+              )
+            _ -> {
+              let token = Token(token.Number, literal, literal, line_number)
+              LexState("", [token, ..tokens], line_number, errors)
+            }
           }
         }
         _ -> panic as "unreachable"
@@ -136,7 +158,7 @@ fn tokenize(lex_state: LexState) -> LexResult {
     "<=" as c <> rest -> make_token_and_continue(token.LessEqual, c, rest)
     ">=" as c <> rest -> make_token_and_continue(token.GreaterEqual, c, rest)
     "//" <> rest ->
-      new_line(scan_comment(LexState(rest, tokens, line_number, errors)))
+      tokenize(scan_comment(LexState(rest, tokens, line_number, errors)))
     "\n" <> rest -> new_line(rest)
     // Whitespace
     " " <> rest -> skip_char(rest)
@@ -158,11 +180,11 @@ fn tokenize(lex_state: LexState) -> LexResult {
     "<" as c <> rest -> make_token_and_continue(token.Less, c, rest)
     ">" as c <> rest -> make_token_and_continue(token.Greater, c, rest)
     "/" as c <> rest -> make_token_and_continue(token.Slash, c, rest)
-    "\"" <> rest -> {
-      let #(string_literal, rest) =
-        scan_string_literal(LexState(rest, tokens, line_number, errors), rest)
-      make_token_and_continue(token.String, string_literal, rest)
-    }
+    "\"" <> rest ->
+      tokenize(scan_string_literal(
+        LexState(rest, tokens, line_number, errors),
+        rest,
+      ))
     _ -> {
       case string.pop_grapheme(source) {
         Ok(#(hd, r)) -> {
@@ -170,43 +192,22 @@ fn tokenize(lex_state: LexState) -> LexResult {
           let is_letter = utils.is_letter(hd)
           case is_number, is_letter {
             True, _ -> {
-              let #(number, rest) = scan_number_literal(r, hd, False)
-              make_token_and_continue(token.Number, number, rest)
+              tokenize(scan_number_literal(
+                LexState(r, tokens, line_number, errors),
+                hd,
+                False,
+              ))
             }
             _, True -> {
-              let #(keyword_or_identifier, rest) =
-                scan_keyword_or_identifier(
-                  LexState(r, tokens, line_number, errors),
-                  hd,
-                )
-              let keyword_map = constants.get_keyword_map()
-              let keyword = dict.get(keyword_map, keyword_or_identifier)
-              case keyword {
-                Ok(keyword) ->
-                  make_token_and_continue(keyword, keyword_or_identifier, rest)
-                _ ->
-                  make_token_and_continue(
-                    token.Identifier,
-                    keyword_or_identifier,
-                    rest,
-                  )
-              }
-              make_token_and_continue(
-                token.Identifier,
-                keyword_or_identifier,
-                rest,
-              )
+              tokenize(scan_keyword_or_identifier(
+                LexState(r, tokens, line_number, errors),
+                hd,
+              ))
             }
             _, _ -> {
               io.println(hd)
               panic as "idk1"
             }
-            // tokenize(
-            //   LexState(r, tokens, line_number, [
-            //     LexError("bad", line_number),
-            //     ..errors
-            //   ]),
-            // )
           }
         }
         Error(_) -> panic as "idk2"
