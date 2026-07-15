@@ -8,7 +8,7 @@ import lox/token.{type Token, Token}
 import lox/utils
 
 pub fn scan(source: String) -> Nil {
-  let tokens = tokenize(source, [], 1)
+  let tokens = tokenize(LexState(source, [], 1, []))
   io.println(string.inspect(tokens))
 }
 
@@ -85,24 +85,38 @@ pub type LexError {
 }
 
 pub type LexResult {
-  LexResult(tokens: List(Token), error_: Option(LexError))
+  LexResult(tokens: List(Token), error: Option(LexError))
 }
 
-fn tokenize(chars: String, tokens: List(Token), i: Int) -> LexResult {
-  let make_token = fn(tt, lex) { Token(tt, lex, "", i) }
+pub type LexState {
+  LexState(
+    source: String,
+    tokens: List(Token),
+    line_number: Int,
+    errors: List(LexError),
+  )
+}
+
+fn tokenize(lex_state: LexState) -> LexResult {
+  let LexState(source:, tokens:, line_number:, errors:) = lex_state
+  let make_token = fn(tt, lex) { Token(tt, lex, "", line_number) }
   let make_token_and_continue = fn(tt, lex, remaining) {
     let t = make_token(tt, lex)
-    tokenize(remaining, [t, ..tokens], i)
+    tokenize(LexState(remaining, [t, ..tokens], line_number, errors))
   }
-  let new_line = fn(rest: String) { tokenize(rest, tokens, i + 1) }
-  let skip_char = fn(rest: String) { tokenize(rest, tokens, i) }
+  let new_line = fn(rest: String) {
+    tokenize(LexState(rest, tokens, line_number + 1, errors))
+  }
+  let skip_char = fn(rest: String) {
+    tokenize(LexState(rest, tokens, line_number, errors))
+  }
   let throw_error = fn(error_message: String) {
-    LexResult(list.reverse(tokens), Some(LexError(error_message, i)))
+    LexResult(list.reverse(tokens), Some(LexError(error_message, line_number)))
   }
-  case chars {
+  case source {
     // EOF of file
     "" -> {
-      let eof = Token(token.Eof, "", "", i)
+      let eof = Token(token.Eof, "", "", line_number)
       LexResult(list.reverse([eof, ..tokens]), None)
     }
     "!=" as c <> rest -> make_token_and_continue(token.BangEqual, c, rest)
@@ -136,7 +150,7 @@ fn tokenize(chars: String, tokens: List(Token), i: Int) -> LexResult {
       make_token_and_continue(token.String, string_literal, rest)
     }
     _ -> {
-      case string.pop_grapheme(chars) {
+      case string.pop_grapheme(source) {
         Ok(#(hd, r)) -> {
           let is_number = utils.is_number(hd)
           let is_letter = utils.is_letter(hd)
