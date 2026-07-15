@@ -85,7 +85,7 @@ pub type LexError {
 }
 
 pub type LexResult {
-  LexResult(tokens: List(Token), error_message: Option(LexError))
+  LexResult(tokens: List(Token), error_: Option(LexError))
 }
 
 fn tokenize(chars: String, tokens: List(Token), i: Int) -> LexResult {
@@ -166,10 +166,10 @@ fn tokenize(chars: String, tokens: List(Token), i: Int) -> LexResult {
                 rest,
               )
             }
-            _, _ -> throw_error("Unknown Error")
+            _, _ -> throw_error("Unexpected Error")
           }
         }
-        Error(_) -> throw_error("Unkown Error")
+        Error(_) -> throw_error("Unexpected Error")
       }
     }
   }
