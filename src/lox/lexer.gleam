@@ -39,8 +39,11 @@ fn scan_keyword_or_identifier(
   chars: String,
   literal: String,
 ) -> #(String, String) {
+  let finish_lex = fn(r) { #(string.reverse(literal), r) }
   case chars {
-    "\"" <> r -> #(string.reverse(literal), r)
+    "\"" <> r -> finish_lex(r)
+    // Whitespace variations?
+    " " <> r -> finish_lex(r)
     _ -> {
       case string.pop_grapheme(chars) {
         Ok(#(char, r)) -> scan_string_literal(r, char <> literal)
@@ -153,7 +156,6 @@ fn scan_(chars: String, tokens: List(Token), i: Int) -> List(Token) {
             }
             _, _ -> panic as "unreachable"
           }
-          []
         }
         Error(_) -> panic as "unreachable"
       }
