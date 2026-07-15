@@ -8,7 +8,7 @@ import lox/token.{type Token, Token}
 import lox/utils
 
 pub fn scan(source: String) -> Nil {
-  let tokens = scan_(source, [], 1)
+  let tokens = tokenize(source, [], 1)
   io.println(string.inspect(tokens))
 }
 
@@ -88,14 +88,14 @@ pub type LexResult {
   LexResult(tokens: List(Token), error_message: Option(LexError))
 }
 
-fn scan_(chars: String, tokens: List(Token), i: Int) -> LexResult {
+fn tokenize(chars: String, tokens: List(Token), i: Int) -> LexResult {
   let make_token = fn(tt, lex) { Token(tt, lex, "", i) }
   let make_token_and_continue = fn(tt, lex, remaining) {
     let t = make_token(tt, lex)
-    scan_(remaining, [t, ..tokens], i)
+    tokenize(remaining, [t, ..tokens], i)
   }
-  let new_line = fn(rest: String) { scan_(rest, tokens, i + 1) }
-  let skip_char = fn(rest: String) { scan_(rest, tokens, i) }
+  let new_line = fn(rest: String) { tokenize(rest, tokens, i + 1) }
+  let skip_char = fn(rest: String) { tokenize(rest, tokens, i) }
   let throw_error = fn(error_message: String) {
     LexResult(list.reverse(tokens), Some(LexError(error_message, i)))
   }
