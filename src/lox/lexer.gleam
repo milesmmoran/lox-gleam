@@ -33,8 +33,7 @@ fn scan_string_literal(lex_state: LexState, literal: String) -> LexState {
       )
     "\"" <> r -> {
       let string_literal = string.reverse(literal)
-      let token =
-        Token(token.String, string_literal, string_literal, line_number)
+      let token = Token(token.String, string_literal, line_number)
       LexState(..lex_state, source: r, tokens: [token, ..tokens])
     }
     _ -> {
@@ -60,8 +59,8 @@ fn scan_keyword_or_identifier(
     let keyword_map = constants.get_keyword_map()
     let keyword = dict.get(keyword_map, word)
     let token = case keyword {
-      Ok(keyword) -> Token(keyword, word, word, line_number)
-      _ -> Token(token.Identifier, word, word, line_number)
+      Ok(keyword) -> Token(keyword, word, line_number)
+      _ -> Token(token.Identifier, word, line_number)
     }
     LexState(r, [token, ..tokens], line_number, errors)
   }
@@ -93,7 +92,7 @@ fn scan_number_literal(
   let LexState(source:, tokens:, line_number:, errors:) = lex_state
   let finish = fn() {
     let number = string.reverse(literal)
-    let token = Token(token.Number, number, number, line_number)
+    let token = Token(token.Number, number, line_number)
     LexState(source, [token, ..tokens], line_number, errors)
   }
   case source, contains_period {
@@ -156,7 +155,7 @@ pub type LexState {
 
 fn tokenize(lex_state: LexState) -> LexResult {
   let LexState(source:, tokens:, line_number:, errors:) = lex_state
-  let make_token = fn(tt, lex) { Token(tt, lex, "", line_number) }
+  let make_token = fn(tt, lex) { Token(tt, lex, line_number) }
   let make_token_and_continue = fn(tt, lex, remaining) {
     let t = make_token(tt, lex)
     tokenize(LexState(remaining, [t, ..tokens], line_number, errors))
@@ -170,7 +169,7 @@ fn tokenize(lex_state: LexState) -> LexResult {
   case source {
     // EOF of file
     "" -> {
-      let eof = Token(token.Eof, "", "", line_number)
+      let eof = Token(token.Eof, "", line_number)
       LexResult(list.reverse([eof, ..tokens]), [])
     }
     "!=" as c <> rest -> make_token_and_continue(token.BangEqual, c, rest)
