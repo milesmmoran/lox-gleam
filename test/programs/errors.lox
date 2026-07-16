@@ -1,0 +1,6 @@
+var ok = 1;
+@ stray at
+var also_ok = 2;
+# stray hash
+$ stray dollar
+var again = 3;

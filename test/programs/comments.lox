@@ -1,0 +1,6 @@
+// full line comment
+var x = 1; // trailing comment
+// comment with symbols !@#$%^&*(){}
+var y = 2;
+//
+var z = 3;

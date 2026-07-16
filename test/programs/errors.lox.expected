@@ -1,0 +1,27 @@
+Var          "var"                line 1
+Identifier   "ok"                 line 1
+Equal        "="                  line 1
+Number       "1"                  line 1
+Semicolon    ";"                  line 1
+Identifier   "stray"              line 2
+Identifier   "at"                 line 2
+Var          "var"                line 3
+Identifier   "also_ok"            line 3
+Equal        "="                  line 3
+Number       "2"                  line 3
+Semicolon    ";"                  line 3
+Identifier   "stray"              line 4
+Identifier   "hash"               line 4
+Identifier   "stray"              line 5
+Identifier   "dollar"             line 5
+Var          "var"                line 6
+Identifier   "again"              line 6
+Equal        "="                  line 6
+Number       "3"                  line 6
+Semicolon    ";"                  line 6
+Eof          ""                   line 7
+
+Errors:
+line 2: Unexpected character '@'
+line 4: Unexpected character '#'
+line 5: Unexpected character '$'

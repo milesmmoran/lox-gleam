@@ -1,0 +1,12 @@
+Identifier   "foo"                line 1
+Identifier   "snake_case"         line 2
+Identifier   "camelCase"          line 3
+Identifier   "PascalCase"         line 4
+Identifier   "_leading_underscore" line 5
+Identifier   "trailing_"          line 6
+Identifier   "name123"            line 7
+Identifier   "_123"               line 8
+Identifier   "a"                  line 9
+Eof          ""                   line 10
+
+(no errors)

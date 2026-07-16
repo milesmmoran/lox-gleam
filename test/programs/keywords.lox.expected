@@ -1,0 +1,19 @@
+And          "and"                line 1
+Class        "class"              line 1
+Else         "else"               line 1
+False        "false"              line 1
+Fun          "fun"                line 1
+For          "for"                line 1
+If           "if"                 line 1
+Nil          "nil"                line 1
+Or           "or"                 line 1
+Print        "print"              line 1
+Return       "return"             line 1
+Super        "super"              line 1
+This         "this"               line 1
+True         "true"               line 1
+Var          "var"                line 1
+While        "while"              line 1
+Eof          ""                   line 2
+
+(no errors)

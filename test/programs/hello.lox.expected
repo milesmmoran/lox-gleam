@@ -1,0 +1,6 @@
+Print        "print"              line 1
+String       "Hello, world!"      line 1
+Semicolon    ";"                  line 1
+Eof          ""                   line 2
+
+(no errors)

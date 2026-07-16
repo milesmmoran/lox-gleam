@@ -1,0 +1,7 @@
+Var          "var"                line 1
+Identifier   "s"                  line 1
+Equal        "="                  line 1
+Eof          ""                   line 3
+
+Errors:
+line 3: Unterminated string literal

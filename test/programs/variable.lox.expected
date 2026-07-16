@@ -1,0 +1,14 @@
+Var          "var"                line 1
+Identifier   "name"               line 1
+Equal        "="                  line 1
+String       "miles"              line 1
+Semicolon    ";"                  line 1
+Var          "var"                line 3
+Identifier   "bob"                line 3
+Equal        "="                  line 3
+Number       "1234"               line 3
+Semicolon    ";"                  line 3
+Eof          ""                   line 6
+
+Errors:
+line 5: Unexpected character '~'

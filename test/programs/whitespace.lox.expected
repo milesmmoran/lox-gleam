@@ -1,0 +1,18 @@
+Var          "var"                line 1
+Identifier   "tabbed"             line 1
+Equal        "="                  line 1
+Number       "1"                  line 1
+Semicolon    ";"                  line 1
+Var          "var"                line 2
+Identifier   "spaced"             line 2
+Equal        "="                  line 2
+Number       "2"                  line 2
+Semicolon    ";"                  line 2
+Var          "var"                line 3
+Identifier   "newlined"           line 4
+Equal        "="                  line 5
+Number       "3"                  line 6
+Semicolon    ";"                  line 6
+Eof          ""                   line 7
+
+(no errors)

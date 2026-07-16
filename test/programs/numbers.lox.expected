@@ -1,0 +1,17 @@
+Number       "0"                  line 1
+Number       "1"                  line 2
+Number       "42"                 line 3
+Number       "12345"              line 4
+Number       "3.14"               line 5
+Number       "0.5"                line 6
+Number       "100.001"            line 7
+Number       "12.34"              line 8
+Dot          "."                  line 8
+Number       "56"                 line 8
+Number       "12"                 line 9
+Dot          "."                  line 9
+Dot          "."                  line 10
+Number       "5"                  line 10
+Eof          ""                   line 11
+
+(no errors)

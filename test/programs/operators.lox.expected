@@ -1,0 +1,22 @@
+LeftParen    "("                  line 1
+RightParen   ")"                  line 1
+LeftBrace    "{"                  line 1
+RightBrace   "}"                  line 1
+Comma        ","                  line 1
+Dot          "."                  line 1
+Minus        "-"                  line 1
+Plus         "+"                  line 1
+Semicolon    ";"                  line 1
+Star         "*"                  line 1
+Slash        "/"                  line 1
+Bang         "!"                  line 2
+BangEqual    "!="                 line 2
+Equal        "="                  line 2
+EqualEqual   "=="                 line 2
+Less         "<"                  line 2
+LessEqual    "<="                 line 2
+Greater      ">"                  line 2
+GreaterEqual ">="                 line 2
+Eof          ""                   line 3
+
+(no errors)
