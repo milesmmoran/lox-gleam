@@ -97,7 +97,23 @@ fn scan_number_literal(
   }
   case source, contains_period {
     "." as c <> r, False ->
-      scan_number_literal(LexState(..lex_state, source: r), c <> literal, True)
+      case string.pop_grapheme(r) {
+        Ok(#(hd, r)) -> {
+          let is_number = utils.is_number(hd)
+          case is_number {
+            True ->
+              scan_number_literal(
+                LexState(..lex_state, source: r),
+                hd <> c <> literal,
+                True,
+              )
+            _ -> {
+              finish()
+            }
+          }
+        }
+        _ -> finish()
+      }
     _, _ -> {
       case string.pop_grapheme(source) {
         Ok(#(hd, r)) -> {
