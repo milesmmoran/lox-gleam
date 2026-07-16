@@ -92,7 +92,8 @@ fn scan_number_literal(
 ) -> LexState {
   let LexState(source:, tokens:, line_number:, errors:) = lex_state
   let finish = fn() {
-    let token = Token(token.Number, literal, literal, line_number)
+    let number = string.reverse(literal)
+    let token = Token(token.Number, number, number, line_number)
     LexState(source, [token, ..tokens], line_number, errors)
   }
   case source, contains_period {
@@ -121,7 +122,7 @@ fn scan_number_literal(
           case is_number {
             True ->
               scan_number_literal(
-                LexState(r, tokens, line_number, errors),
+                LexState(..lex_state, source: r),
                 hd <> literal,
                 contains_period,
               )
