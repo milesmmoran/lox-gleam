@@ -203,34 +203,28 @@ fn tokenize(lex_state: LexState) -> LexResult {
         "",
       ))
     _ -> {
-      case string.pop_grapheme(source) {
-        Ok(#(hd, r)) -> {
-          let is_number = utils.is_number(hd)
-          let is_letter = utils.is_letter(hd)
-          case is_number, is_letter {
-            True, _ -> {
-              tokenize(scan_number_literal(
-                LexState(r, tokens, line_number, errors),
-                hd,
-                False,
-              ))
-            }
-            _, True -> {
-              tokenize(scan_keyword_or_identifier(
-                LexState(r, tokens, line_number, errors),
-                hd,
-              ))
-            }
-            _, _ -> {
-              let error =
-                LexError("Unexpected character '" <> hd <> "'", line_number)
-              tokenize(
-                LexState(..lex_state, source: r, errors: [error, ..errors]),
-              )
-            }
-          }
+      let assert Ok(#(hd, r)) = string.pop_grapheme(source)
+      let is_number = utils.is_number(hd)
+      let is_letter = utils.is_letter(hd)
+      case is_number, is_letter {
+        True, _ -> {
+          tokenize(scan_number_literal(
+            LexState(r, tokens, line_number, errors),
+            hd,
+            False,
+          ))
         }
-        Error(_) -> panic as "unreachable"
+        _, True -> {
+          tokenize(scan_keyword_or_identifier(
+            LexState(r, tokens, line_number, errors),
+            hd,
+          ))
+        }
+        _, _ -> {
+          let error =
+            LexError("Unexpected character '" <> hd <> "'", line_number)
+          tokenize(LexState(..lex_state, source: r, errors: [error, ..errors]))
+        }
       }
     }
   }
