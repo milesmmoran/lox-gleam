@@ -1,4 +1,3 @@
-import gleam/dict
 import gleam/list
 import gleam/string
 import lox/constants
@@ -64,12 +63,8 @@ fn scan_keyword_or_identifier(
   let LexState(source:, tokens:, line_number:, errors:) = lex_state
   let finish = fn(r) {
     let word = string.reverse(literal)
-    let keyword_map = constants.get_keyword_map()
-    let keyword = dict.get(keyword_map, word)
-    let token = case keyword {
-      Ok(keyword) -> Token(keyword, word, line_number)
-      _ -> Token(token.Identifier, word, line_number)
-    }
+    let token_type = constants.classify(word)
+    let token = Token(token_type, word, line_number)
     LexState(r, [token, ..tokens], line_number, errors)
   }
   case source {
