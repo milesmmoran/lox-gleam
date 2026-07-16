@@ -225,11 +225,11 @@ fn tokenize(lex_state: LexState) -> LexResult {
             }
             _, _ -> {
               io.println(hd)
-              panic as "idk1"
+              panic as "unreachable"
             }
           }
         }
-        Error(_) -> panic as "idk2"
+        Error(_) -> panic as "unreachable"
       }
     }
   }
