@@ -170,7 +170,7 @@ fn tokenize(lex_state: LexState) -> LexResult {
     // EOF of file
     "" -> {
       let eof = Token(token.Eof, "", line_number)
-      LexResult(list.reverse([eof, ..tokens]), errors)
+      LexResult(list.reverse([eof, ..tokens]), list.reverse(errors))
     }
     "!=" as c <> rest -> make_token_and_continue(token.BangEqual, c, rest)
     "==" as c <> rest -> make_token_and_continue(token.EqualEqual, c, rest)

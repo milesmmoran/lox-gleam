@@ -50,5 +50,5 @@ pub type TokenType {
 }
 
 pub type Token {
-  Token(type_: TokenType, literal: String, line: Int)
+  Token(type_: TokenType, lexeme: String, line: Int)
 }
