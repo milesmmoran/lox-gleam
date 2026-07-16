@@ -15,7 +15,8 @@ pub fn get_keyword_map() {
     #("return", token.Return),
     #("super", token.Super),
     #("this", token.This),
-    #("True", token.True),
+    #("true", token.True),
+    #("nil", token.Nil),
     #("var", token.Var),
     #("while", token.While),
   ])

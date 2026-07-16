@@ -170,7 +170,7 @@ fn tokenize(lex_state: LexState) -> LexResult {
     // EOF of file
     "" -> {
       let eof = Token(token.Eof, "", line_number)
-      LexResult(list.reverse([eof, ..tokens]), [])
+      LexResult(list.reverse([eof, ..tokens]), errors)
     }
     "!=" as c <> rest -> make_token_and_continue(token.BangEqual, c, rest)
     "==" as c <> rest -> make_token_and_continue(token.EqualEqual, c, rest)
@@ -224,8 +224,11 @@ fn tokenize(lex_state: LexState) -> LexResult {
               ))
             }
             _, _ -> {
-              io.println(hd)
-              panic as "unreachable"
+              let error =
+                LexError("Unexpected character '" <> hd <> "'", line_number)
+              tokenize(
+                LexState(..lex_state, source: r, errors: [error, ..errors]),
+              )
             }
           }
         }
