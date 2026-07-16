@@ -25,7 +25,16 @@ fn parse_expression(state: ParseState) -> #(Expr, ParseState) {
 }
 
 fn parse_factor(state: ParseState) -> #(Expr, ParseState) {
-  parse_unary(state)
+  let #(left, left_state) = parse_unary(state)
+  let assert [hd, ..r] = left_state.tokens
+  case hd.type_ {
+    token.Star | token.Slash -> {
+      let #(next_expression, next_state) =
+        parse_unary(ParseState(..left_state, tokens: r))
+      #(expr.Binary(left, hd, next_expression), next_state)
+    }
+    _ -> #(left, left_state)
+  }
 }
 
 fn parse_unary(state: ParseState) -> #(Expr, ParseState) {

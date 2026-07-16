@@ -1,7 +1,7 @@
-import lox/token.{type Token, type TokenType}
+import lox/token.{type Token}
 
 pub type Expr {
-  Binary(left: Expr, op: TokenType, right: Expr)
+  Binary(left: Expr, op: Token, right: Expr)
   Unary(op: Token, operand: Expr)
   Literal(value: LiteralValue)
   Grouping(expr: Expr)
