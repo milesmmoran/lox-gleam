@@ -3,6 +3,23 @@ import gleam/string
 import lox/char
 import lox/token.{type Token, Token}
 
+pub type LexError {
+  LexError(message: String, line_number: Int)
+}
+
+pub type LexResult {
+  LexResult(tokens: List(Token), errors: List(LexError))
+}
+
+type LexState {
+  LexState(
+    source: String,
+    tokens: List(Token),
+    line_number: Int,
+    errors: List(LexError),
+  )
+}
+
 pub fn scan(source: String) -> LexResult {
   tokenize(LexState(source, [], 1, []))
 }
@@ -132,23 +149,6 @@ fn scan_number_literal(
       }
     }
   }
-}
-
-pub type LexError {
-  LexError(message: String, line_number: Int)
-}
-
-pub type LexResult {
-  LexResult(tokens: List(Token), errors: List(LexError))
-}
-
-pub type LexState {
-  LexState(
-    source: String,
-    tokens: List(Token),
-    line_number: Int,
-    errors: List(LexError),
-  )
 }
 
 fn tokenize(lex_state: LexState) -> LexResult {
