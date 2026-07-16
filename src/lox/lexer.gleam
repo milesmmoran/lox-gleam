@@ -21,25 +21,35 @@ fn scan_comment(lex_state: LexState) -> LexState {
   }
 }
 
-fn scan_string_literal(lex_state: LexState, literal: String) -> LexState {
+fn scan_string_literal(
+  lex_state: LexState,
+  literal: String,
+  starting_line_number: Int,
+) -> LexState {
   let LexState(source:, tokens:, line_number:, errors:) = lex_state
   case source {
     "\n" as c <> r ->
       scan_string_literal(
         LexState(..lex_state, source: r, line_number: line_number + 1),
         c <> literal,
+        starting_line_number,
       )
     "\"" <> r -> {
       let string_literal = string.reverse(literal)
-      let token = Token(token.String, string_literal, line_number)
+      let token = Token(token.String, string_literal, starting_line_number)
       LexState(..lex_state, source: r, tokens: [token, ..tokens])
     }
     _ -> {
       case string.pop_grapheme(source) {
         Ok(#(char, r)) ->
-          scan_string_literal(LexState(..lex_state, source: r), char <> literal)
+          scan_string_literal(
+            LexState(..lex_state, source: r),
+            char <> literal,
+            starting_line_number,
+          )
         Error(_) -> {
-          let error = LexError("Unterminated string literal", line_number)
+          let error =
+            LexError("Unterminated string literal", starting_line_number)
           LexState(..lex_state, errors: [error, ..errors])
         }
       }
@@ -201,6 +211,7 @@ fn tokenize(lex_state: LexState) -> LexResult {
       tokenize(scan_string_literal(
         LexState(rest, tokens, line_number, errors),
         "",
+        line_number,
       ))
     _ -> {
       let assert Ok(#(hd, r)) = string.pop_grapheme(source)

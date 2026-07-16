@@ -2,7 +2,7 @@ String       ""                   line 1
 String       "hello"              line 2
 String       "with spaces and punctuation!" line 3
 String       "numbers 123 inside" line 4
-String       "multi\nline\nstring" line 7
+String       "multi\nline\nstring" line 5
 String       "symbols: (){},.;+-*/<>=!" line 8
 Eof          ""                   line 9
 
