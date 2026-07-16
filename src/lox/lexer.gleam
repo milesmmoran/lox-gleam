@@ -12,15 +12,12 @@ pub fn scan(source: String) -> Nil {
 }
 
 fn scan_comment(lex_state: LexState) -> LexState {
-  let LexState(source:, tokens:, line_number:, errors:) = lex_state
-  case source {
-    "" -> LexState("", tokens, line_number + 1, errors)
-    "\n" <> rest -> LexState(rest, tokens, line_number + 1, errors)
+  case lex_state.source {
+    "\n" <> _ -> lex_state
     _ -> {
-      case string.pop_grapheme(source) {
-        Ok(#(_, rest)) ->
-          scan_comment(LexState(rest, tokens, line_number, errors))
-        Error(_) -> panic as "impossible"
+      case string.pop_grapheme(lex_state.source) {
+        Ok(#(_, rest)) -> scan_comment(LexState(..lex_state, source: rest))
+        Error(_) -> lex_state
       }
     }
   }
@@ -29,20 +26,25 @@ fn scan_comment(lex_state: LexState) -> LexState {
 fn scan_string_literal(lex_state: LexState, literal: String) -> LexState {
   let LexState(source:, tokens:, line_number:, errors:) = lex_state
   case source {
+    "\n" as c <> r ->
+      scan_string_literal(
+        LexState(..lex_state, source: r, line_number: line_number + 1),
+        c <> literal,
+      )
     "\"" <> r -> {
       let string_literal = string.reverse(literal)
       let token =
         Token(token.String, string_literal, string_literal, line_number)
-      LexState(r, [token, ..tokens], line_number, errors)
+      LexState(..lex_state, source: r, tokens: [token, ..tokens])
     }
     _ -> {
       case string.pop_grapheme(source) {
         Ok(#(char, r)) ->
-          scan_string_literal(
-            LexState(r, tokens, line_number, errors),
-            char <> literal,
-          )
-        Error(_) -> panic as "unreachable"
+          scan_string_literal(LexState(..lex_state, source: r), char <> literal)
+        Error(_) -> {
+          let error = LexError("Unterminated string literal", line_number)
+          LexState(..lex_state, errors: [error, ..errors])
+        }
       }
     }
   }
@@ -53,24 +55,31 @@ fn scan_keyword_or_identifier(
   literal: String,
 ) -> LexState {
   let LexState(source:, tokens:, line_number:, errors:) = lex_state
-  case source {
-    "" <> r -> {
-      let keyword_map = constants.get_keyword_map()
-      let keyword = dict.get(keyword_map, literal)
-      let token = case keyword {
-        Ok(keyword) -> Token(keyword, literal, literal, line_number)
-        _ -> Token(token.Identifier, literal, literal, line_number)
-      }
-      LexState(r, [token, ..tokens], line_number, errors)
+  let finish = fn(r) {
+    let word = string.reverse(literal)
+    let keyword_map = constants.get_keyword_map()
+    let keyword = dict.get(keyword_map, word)
+    let token = case keyword {
+      Ok(keyword) -> Token(keyword, word, word, line_number)
+      _ -> Token(token.Identifier, word, word, line_number)
     }
+    LexState(r, [token, ..tokens], line_number, errors)
+  }
+  case source {
     _ -> {
       case string.pop_grapheme(source) {
-        Ok(#(char, r)) ->
-          scan_keyword_or_identifier(
-            LexState(r, tokens, line_number, errors),
-            char <> literal,
-          )
-        Error(_) -> panic as "unreachable"
+        Ok(#(char, r)) -> {
+          let is_alphanumeric = utils.is_alphanumeric(char)
+          case is_alphanumeric {
+            True ->
+              scan_keyword_or_identifier(
+                LexState(r, tokens, line_number, errors),
+                char <> literal,
+              )
+            False -> finish(source)
+          }
+        }
+        Error(_) -> finish("")
       }
     }
   }
@@ -82,18 +91,13 @@ fn scan_number_literal(
   contains_period: Bool,
 ) -> LexState {
   let LexState(source:, tokens:, line_number:, errors:) = lex_state
+  let finish = fn() {
+    let token = Token(token.Number, literal, literal, line_number)
+    LexState(source, [token, ..tokens], line_number, errors)
+  }
   case source, contains_period {
-    "", _ -> {
-      let token = Token(token.Number, literal, literal, line_number)
-      LexState("", [token, ..tokens], line_number, errors)
-    }
-    "." <> _, True -> panic as "unexpected period"
-    "." <> r, False ->
-      scan_number_literal(
-        LexState(r, tokens, line_number, errors),
-        "." <> literal,
-        True,
-      )
+    "." as c <> r, False ->
+      scan_number_literal(LexState(..lex_state, source: r), c <> literal, True)
     _, _ -> {
       case string.pop_grapheme(source) {
         Ok(#(hd, r)) -> {
@@ -106,12 +110,11 @@ fn scan_number_literal(
                 contains_period,
               )
             _ -> {
-              let token = Token(token.Number, literal, literal, line_number)
-              LexState("", [token, ..tokens], line_number, errors)
+              finish()
             }
           }
         }
-        _ -> panic as "unreachable"
+        _ -> finish()
       }
     }
   }
@@ -183,7 +186,7 @@ fn tokenize(lex_state: LexState) -> LexResult {
     "\"" <> rest ->
       tokenize(scan_string_literal(
         LexState(rest, tokens, line_number, errors),
-        rest,
+        "",
       ))
     _ -> {
       case string.pop_grapheme(source) {
@@ -215,4 +218,3 @@ fn tokenize(lex_state: LexState) -> LexResult {
     }
   }
 }
-// So, the issue i'm experiencing now, is error handling doesn't feel great, with these panics. I want to use a clojure, but can't recurse.
