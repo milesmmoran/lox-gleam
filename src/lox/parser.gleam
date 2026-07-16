@@ -21,6 +21,10 @@ pub fn parse(tokens: List(Token)) -> ParseResult {
 }
 
 fn parse_expression(state: ParseState) -> #(Expr, ParseState) {
+  parse_factor(state)
+}
+
+fn parse_factor(state: ParseState) -> #(Expr, ParseState) {
   parse_unary(state)
 }
 
