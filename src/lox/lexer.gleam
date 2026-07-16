@@ -1,14 +1,12 @@
 import gleam/dict
-import gleam/io
 import gleam/list
 import gleam/string
 import lox/constants
 import lox/token.{type Token, Token}
 import lox/utils
 
-pub fn scan(source: String) -> Nil {
-  let tokens = tokenize(LexState(source, [], 1, []))
-  io.println(string.inspect(tokens))
+pub fn scan(source: String) -> LexResult {
+  tokenize(LexState(source, [], 1, []))
 }
 
 fn scan_comment(lex_state: LexState) -> LexState {

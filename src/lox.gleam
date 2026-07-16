@@ -1,5 +1,6 @@
 import argv
 import gleam/io
+import gleam/string
 import lox/lexer
 import simplifile
 
@@ -26,5 +27,7 @@ fn run_file(path: String) -> Nil {
 
 fn run(source: String) -> Nil {
   io.println(source)
-  let _tokens = lexer.scan(source)
+  let tokens = lexer.scan(source).tokens
+  io.println(string.inspect(tokens))
+  Nil
 }
