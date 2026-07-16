@@ -1,6 +1,5 @@
 import gleam/list
 import gleam/string
-import lox/constants
 import lox/token.{type Token, Token}
 import lox/utils
 
@@ -63,27 +62,23 @@ fn scan_keyword_or_identifier(
   let LexState(source:, tokens:, line_number:, errors:) = lex_state
   let finish = fn(r) {
     let word = string.reverse(literal)
-    let token_type = constants.classify(word)
+    let token_type = token.classify(word)
     let token = Token(token_type, word, line_number)
     LexState(r, [token, ..tokens], line_number, errors)
   }
-  case source {
-    _ -> {
-      case string.pop_grapheme(source) {
-        Ok(#(char, r)) -> {
-          let is_alphanumeric = utils.is_alphanumeric(char)
-          case is_alphanumeric {
-            True ->
-              scan_keyword_or_identifier(
-                LexState(r, tokens, line_number, errors),
-                char <> literal,
-              )
-            False -> finish(source)
-          }
-        }
-        Error(_) -> finish("")
+  case string.pop_grapheme(source) {
+    Ok(#(char, r)) -> {
+      let is_alphanumeric = utils.is_alphanumeric(char)
+      case is_alphanumeric {
+        True ->
+          scan_keyword_or_identifier(
+            LexState(r, tokens, line_number, errors),
+            char <> literal,
+          )
+        False -> finish(source)
       }
     }
+    Error(_) -> finish("")
   }
 }
 
