@@ -1,7 +1,7 @@
 import gleam/list
 import gleam/string
+import lox/char
 import lox/token.{type Token, Token}
-import lox/utils
 
 pub fn scan(source: String) -> LexResult {
   tokenize(LexState(source, [], 1, []))
@@ -68,7 +68,7 @@ fn scan_keyword_or_identifier(
   }
   case string.pop_grapheme(source) {
     Ok(#(char, r)) -> {
-      let is_alphanumeric = utils.is_alphanumeric(char)
+      let is_alphanumeric = char.is_alphanumeric(char)
       case is_alphanumeric {
         True ->
           scan_keyword_or_identifier(
@@ -97,7 +97,7 @@ fn scan_number_literal(
     "." as c <> r, False ->
       case string.pop_grapheme(r) {
         Ok(#(hd, r)) -> {
-          let is_number = utils.is_number(hd)
+          let is_number = char.is_number(hd)
           case is_number {
             True ->
               scan_number_literal(
@@ -115,7 +115,7 @@ fn scan_number_literal(
     _, _ -> {
       case string.pop_grapheme(source) {
         Ok(#(hd, r)) -> {
-          let is_number = utils.is_number(hd)
+          let is_number = char.is_number(hd)
           case is_number {
             True ->
               scan_number_literal(
@@ -205,8 +205,8 @@ fn tokenize(lex_state: LexState) -> LexResult {
       ))
     _ -> {
       let assert Ok(#(hd, r)) = string.pop_grapheme(source)
-      let is_number = utils.is_number(hd)
-      let is_letter = utils.is_letter(hd)
+      let is_number = char.is_number(hd)
+      let is_letter = char.is_letter(hd)
       case is_number, is_letter {
         True, _ -> {
           tokenize(scan_number_literal(

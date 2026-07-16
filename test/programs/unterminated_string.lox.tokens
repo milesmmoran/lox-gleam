@@ -4,4 +4,4 @@ Equal        "="                  line 1
 Eof          ""                   line 3
 
 Errors:
-line 3: Unterminated string literal
+line 1: Unterminated string literal

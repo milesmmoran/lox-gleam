@@ -7,7 +7,7 @@ import simplifile
 
 const programs_dir = "test/programs"
 
-pub fn snapshot_test() {
+pub fn lex_snapshot_test() {
   let assert Ok(entries) = simplifile.read_directory(programs_dir)
   let sources =
     entries
@@ -33,7 +33,7 @@ pub fn snapshot_test() {
 
 fn check_one(name: String) -> Result(String, Nil) {
   let source_path = programs_dir <> "/" <> name
-  let expected_path = source_path <> ".expected"
+  let expected_path = source_path <> ".tokens"
   let assert Ok(source) = simplifile.read(source_path)
   let actual = source |> lexer.scan |> format.format_result
 
