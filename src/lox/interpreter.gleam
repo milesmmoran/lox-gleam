@@ -70,7 +70,6 @@ pub fn eval(expr: Expr) -> expr.LiteralValue {
 
         token.EqualEqual -> expr.BoolVal(left_val == right_val)
         token.BangEqual -> expr.BoolVal(left_val != right_val)
-
         _ -> panic
       }
     }
