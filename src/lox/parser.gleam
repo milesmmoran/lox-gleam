@@ -48,11 +48,18 @@ fn parse_declarations(
   state: ParseState,
   declarations: List(Declaration),
 ) -> #(List(Declaration), ParseState) {
+  case peek(state).type_ {
+    token.Eof -> #(list.reverse(declarations), state)
+    _ -> {
+      let #(decl, state) = parse_declaration(state)
+      parse_declarations(state, [decl, ..declarations])
+    }
+  }
+}
+
+fn parse_declaration(state: ParseState) -> #(Declaration, ParseState) {
   let #(hd1, state1) = advance(state)
   case hd1.type_ {
-    token.Eof -> {
-      #(list.reverse(declarations), state)
-    }
     token.Var -> {
       let #(hd2, state2) = advance(state1)
       case hd2.type_ {
@@ -65,27 +72,25 @@ fn parse_declarations(
               let state5 =
                 consume(state4, token.Semicolon, "Expected ';' after value.")
               let decl = expr.VarDecl(name, option.Some(init))
-              parse_declarations(state5, [decl, ..declarations])
+              #(decl, state5)
             }
             token.Semicolon -> {
               let decl = expr.VarDecl(name, option.None)
-              parse_declarations(state3, [decl, ..declarations])
+              #(decl, state3)
             }
             _ -> panic
           }
         }
         _ -> panic as "you need to finish your variable decl, no identifier"
       }
-      // if not identifer, throw.
     }
     token.Print -> {
-      let #(expr, new_state) =
-        parse_expression(ParseState(..state, tokens: state1.tokens))
+      let #(expr, state) = parse_expression(state1)
       let state =
-        consume(new_state, token.Semicolon, "Expected ';' after expression.")
+        consume(state, token.Semicolon, "Expected ';' after expression.")
       let statement = expr.PrintStmt(expr)
       let decl = expr.Statement(statement)
-      parse_declarations(state, [decl, ..declarations])
+      #(decl, state)
     }
     token.If -> {
       todo
@@ -107,16 +112,9 @@ fn parse_declarations(
         consume(new_state, token.Semicolon, "Expected ';' after expression.")
       let statement = expr.ExprStmt(expr)
       let decl = expr.Statement(statement)
-      parse_declarations(state, [decl, ..declarations])
+      #(decl, state)
     }
   }
-}
-
-fn parse_declaration(
-  state: ParseState,
-  declarations: List(Declaration),
-) -> #(List(Declaration), ParseState) {
-  todo
 }
 
 fn parse_expression(state: ParseState) -> #(Expr, ParseState) {
