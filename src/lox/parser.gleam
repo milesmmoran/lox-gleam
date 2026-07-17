@@ -1,12 +1,9 @@
 import gleam/float
 import gleam/int
 import gleam/list
+import lox/error.{type ParseError, ParseError}
 import lox/expr.{type Expr}
 import lox/token.{type Token}
-
-pub type ParseError {
-  ParseError(message: String, token: Token)
-}
 
 pub type ParseResult {
   ParseResult(expr: Result(Expr, Nil), errors: List(ParseError))

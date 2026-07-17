@@ -1,11 +1,8 @@
 import gleam/list
 import gleam/string
 import lox/char
+import lox/error.{type LexError, LexError}
 import lox/token.{type Token, Token}
-
-pub type LexError {
-  LexError(message: String, line_number: Int)
-}
 
 pub type LexResult {
   LexResult(tokens: List(Token), errors: List(LexError))

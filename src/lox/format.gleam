@@ -1,7 +1,8 @@
 import gleam/int
 import gleam/list
 import gleam/string
-import lox/lexer.{type LexError, type LexResult}
+import lox/error.{type LexError}
+import lox/lexer.{type LexResult}
 import lox/token.{type Token}
 
 pub fn format_result(result: LexResult) -> String {
