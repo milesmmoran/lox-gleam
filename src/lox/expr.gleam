@@ -10,7 +10,7 @@ pub type Statement {
   ExprStmt(expr: Expr)
   PrintStmt(expr: Expr)
   BlockStmt(declarations: List(Declaration))
-  IfStmt(cond: Expr, then_branch: Statement, else_branch: Option(Statement))
+  IfStmt(cond: Expr, then_branch: Declaration, else_branch: Option(Declaration))
 }
 
 pub type Expr {

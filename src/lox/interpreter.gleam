@@ -103,6 +103,14 @@ fn eval_statement(statement: Declaration, env: Env) -> Env {
       let post_env = eval_statements(decls, new_env)
       pop_scope(post_env)
     }
+    expr.Statement(expr.IfStmt(cond, then_branch, else_branch)) -> {
+      let #(cond_val, env) = eval_expr(cond, env)
+      case is_truthy(cond_val), else_branch {
+        True, _ -> eval_statement(then_branch, env)
+        False, option.Some(else_stmt) -> eval_statement(else_stmt, env)
+        False, option.None -> env
+      }
+    }
   }
 }
 

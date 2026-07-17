@@ -1,7 +1,7 @@
 import gleam/float
 import gleam/int
 import gleam/list
-import gleam/option.{None}
+import gleam/option.{None, Some}
 import lox/error.{type ParseError, ParseError}
 import lox/expr.{type Declaration, type Expr, type Statement}
 import lox/token.{type Token}
@@ -93,18 +93,22 @@ fn parse_declaration(state: ParseState) -> #(Declaration, ParseState) {
       #(decl, state)
     }
     token.If -> {
-      todo
-      // let #(cond, post_cond_state) = parse_expression(state)
-      // let #(then, post_then_state) = parse_declarations(post_cond_state, [])
-      // case post_then_state.tokens {
-      //   [hd, ..r] if hd.type_ == token.Else -> {
-      //     let if_statement = expr.ExprStmt(expr.IfStmt(cond, then, None))
-      //   }
-      //   _ -> {
-      //     let if_statement = expr.ExprStmt(expr.IfStmt(cond, then, None))
-      //     todo
-      //   }
-      // }
+      let #(cond, post_cond_state) = parse_expression(state1)
+      let #(then, post_then_state) = parse_declaration(post_cond_state)
+      case post_then_state.tokens {
+        [hd, ..r] if hd.type_ == token.Else -> {
+          let #(else_, post_else_state) =
+            parse_declaration(ParseState(..post_then_state, tokens: r))
+          let if_decl = expr.IfStmt(cond, then, Some(else_))
+          let s = expr.Statement(if_decl)
+          #(s, post_else_state)
+        }
+        _ -> {
+          let if_decl = expr.IfStmt(cond, then, None)
+          let s = expr.Statement(if_decl)
+          #(s, post_then_state)
+        }
+      }
     }
     _ -> {
       let #(expr, new_state) = parse_expression(state)
