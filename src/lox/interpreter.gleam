@@ -133,6 +133,25 @@ fn eval_expr(e: Expr, env: Env) -> #(expr.LiteralValue, Env) {
       let #(v, env) = eval_expr(value_expr, env)
       #(v, update_var(env, name, v))
     }
+    expr.Logical(left, op, right) -> {
+      case op.type_ {
+        token.Or -> {
+          let #(l, env) = eval_expr(left, env)
+          case is_truthy(l) {
+            True -> #(l, env)
+            False -> eval_expr(right, env)
+          }
+        }
+        token.And -> {
+          let #(l, env) = eval_expr(left, env)
+          case !is_truthy(l) {
+            True -> #(l, env)
+            False -> eval_expr(right, env)
+          }
+        }
+        _ -> panic
+      }
+    }
     expr.Unary(op, operand) -> {
       let #(val, env) = eval_expr(operand, env)
       case op.type_ {
