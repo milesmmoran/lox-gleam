@@ -1,5 +1,10 @@
 import lox/token.{type Token}
 
+pub type Statement {
+  ExprStmt(expr: Expr)
+  PrintStmt(expr: Expr)
+}
+
 pub type Expr {
   Binary(left: Expr, op: Token, right: Expr)
   Unary(op: Token, operand: Expr)
