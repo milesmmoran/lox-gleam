@@ -2,11 +2,11 @@ import gleam/float
 import gleam/int
 import gleam/list
 import lox/error.{type ParseError, ParseError}
-import lox/expr.{type Expr}
+import lox/expr.{type Expr, type Statement}
 import lox/token.{type Token}
 
 pub type ParseResult {
-  ParseResult(expr: Result(Expr, Nil), errors: List(ParseError))
+  ParseResult(expr: Result(List(Statement), Nil), errors: List(ParseError))
 }
 
 type ParseState {
@@ -14,8 +14,25 @@ type ParseState {
 }
 
 pub fn parse(tokens: List(Token)) -> ParseResult {
-  let #(expr, state) = parse_expression(ParseState(tokens, []))
-  ParseResult(Ok(expr), list.reverse(state.errors))
+  let #(statements, state) = parse_statements(ParseState(tokens, []), [])
+  ParseResult(Ok(statements), list.reverse(state.errors))
+}
+
+fn parse_statements(
+  state: ParseState,
+  statements: List(Statement),
+) -> #(List(Statement), ParseState) {
+  let assert [hd, ..] = state.tokens
+  case hd.type_ {
+    token.Eof -> {
+      #(list.reverse(statements), state)
+    }
+    _ -> {
+      let #(expr, new_state) = parse_expression(state)
+      let es = expr.ExprStmt(expr)
+      parse_statements(new_state, [es, ..statements])
+    }
+  }
 }
 
 fn parse_expression(state: ParseState) -> #(Expr, ParseState) {

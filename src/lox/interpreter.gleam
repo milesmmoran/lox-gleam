@@ -1,13 +1,29 @@
 import gleam/float
-import lox/expr.{type Expr}
+import lox/expr.{type Expr, type Statement}
 import lox/token
 
-pub fn eval(expr: Expr) -> expr.LiteralValue {
+pub fn eval(statements: List(Statement)) -> Nil {
+  case statements {
+    [hd, ..r] -> {
+      case hd {
+        expr.ExprStmt(expr) -> {
+          eval_expr(expr)
+          eval(r)
+          Nil
+        }
+        _ -> panic
+      }
+    }
+    _ -> Nil
+  }
+}
+
+pub fn eval_expr(expr: Expr) -> expr.LiteralValue {
   case expr {
     expr.Literal(val) -> val
-    expr.Grouping(e) -> eval(e)
+    expr.Grouping(e) -> eval_expr(e)
     expr.Unary(op, operand) -> {
-      let val = eval(operand)
+      let val = eval_expr(operand)
       case op.type_ {
         token.Minus ->
           case val {
@@ -19,8 +35,8 @@ pub fn eval(expr: Expr) -> expr.LiteralValue {
       }
     }
     expr.Binary(left, op, right) -> {
-      let left_val = eval(left)
-      let right_val = eval(right)
+      let left_val = eval_expr(left)
+      let right_val = eval_expr(right)
       case op.type_ {
         token.Plus ->
           case left_val, right_val {
