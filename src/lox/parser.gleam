@@ -37,10 +37,17 @@ fn parse_statements(
   state: ParseState,
   statements: List(Statement),
 ) -> #(List(Statement), ParseState) {
-  let assert [hd, ..] = state.tokens
+  let assert [hd, ..r] = state.tokens
   case hd.type_ {
     token.Eof -> {
       #(list.reverse(statements), state)
+    }
+    token.Print -> {
+      let #(expr, new_state) = parse_expression(ParseState(..state, tokens: r))
+      let state =
+        consume(new_state, token.Semicolon, "Expected ';' after expression.")
+      let statement = expr.PrintStmt(expr)
+      parse_statements(state, [statement, ..statements])
     }
     _ -> {
       let #(expr, new_state) = parse_expression(state)
