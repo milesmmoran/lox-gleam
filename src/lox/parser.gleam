@@ -1,5 +1,6 @@
 import gleam/float
 import gleam/int
+import gleam/list
 import lox/expr.{type Expr}
 import lox/token.{type Token}
 
@@ -16,8 +17,8 @@ type ParseState {
 }
 
 pub fn parse(tokens: List(Token)) -> ParseResult {
-  parse_expression(ParseState(tokens, []))
-  todo
+  let #(expr, state) = parse_expression(ParseState(tokens, []))
+  ParseResult(Ok(expr), list.reverse(state.errors))
 }
 
 fn parse_expression(state: ParseState) -> #(Expr, ParseState) {
@@ -92,8 +93,8 @@ fn parse_unary(state: ParseState) -> #(Expr, ParseState) {
   let assert [hd, ..r] = state.tokens
   case hd.type_ {
     token.Bang | token.Minus -> {
-      let #(expr, state) = parse_unary(ParseState(..state, tokens: r))
-      #(expr.Unary(hd, expr), ParseState(..state, tokens: r))
+      let #(operand, state) = parse_unary(ParseState(..state, tokens: r))
+      #(expr.Unary(hd, operand), state)
     }
     _ -> parse_primary(state)
   }
