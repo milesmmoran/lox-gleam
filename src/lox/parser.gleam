@@ -1,7 +1,7 @@
 import gleam/float
 import gleam/int
 import gleam/list
-import gleam/option
+import gleam/option.{None}
 import lox/error.{type ParseError, ParseError}
 import lox/expr.{type Declaration, type Expr, type Statement}
 import lox/token.{type Token}
@@ -87,6 +87,20 @@ fn parse_declarations(
       let decl = expr.Statement(statement)
       parse_declarations(state, [decl, ..declarations])
     }
+    token.If -> {
+      todo
+      // let #(cond, post_cond_state) = parse_expression(state)
+      // let #(then, post_then_state) = parse_declarations(post_cond_state, [])
+      // case post_then_state.tokens {
+      //   [hd, ..r] if hd.type_ == token.Else -> {
+      //     let if_statement = expr.ExprStmt(expr.IfStmt(cond, then, None))
+      //   }
+      //   _ -> {
+      //     let if_statement = expr.ExprStmt(expr.IfStmt(cond, then, None))
+      //     todo
+      //   }
+      // }
+    }
     _ -> {
       let #(expr, new_state) = parse_expression(state)
       let state =
@@ -96,6 +110,13 @@ fn parse_declarations(
       parse_declarations(state, [decl, ..declarations])
     }
   }
+}
+
+fn parse_declaration(
+  state: ParseState,
+  declarations: List(Declaration),
+) -> #(List(Declaration), ParseState) {
+  todo
 }
 
 fn parse_expression(state: ParseState) -> #(Expr, ParseState) {
