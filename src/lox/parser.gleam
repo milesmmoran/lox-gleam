@@ -16,24 +16,75 @@ type ParseState {
 }
 
 pub fn parse(tokens: List(Token)) -> ParseResult {
-  parse_unary(ParseState(tokens, []))
+  parse_expression(ParseState(tokens, []))
   todo
 }
 
 fn parse_expression(state: ParseState) -> #(Expr, ParseState) {
-  parse_factor(state)
+  parse_equality(state)
+}
+
+fn parse_equality(state: ParseState) -> #(Expr, ParseState) {
+  let #(left, state) = parse_comparison(state)
+  parse_equality_loop(left, state)
+}
+
+fn parse_equality_loop(left: Expr, state: ParseState) -> #(Expr, ParseState) {
+  let assert [hd, ..r] = state.tokens
+  case hd.type_ {
+    token.EqualEqual | token.BangEqual -> {
+      let #(right, state) = parse_comparison(ParseState(..state, tokens: r))
+      parse_equality_loop(expr.Binary(left, hd, right), state)
+    }
+    _ -> #(left, state)
+  }
+}
+
+fn parse_comparison(state: ParseState) -> #(Expr, ParseState) {
+  let #(left, state) = parse_term(state)
+  parse_comparison_loop(left, state)
+}
+
+fn parse_comparison_loop(left: Expr, state: ParseState) -> #(Expr, ParseState) {
+  let assert [hd, ..r] = state.tokens
+  case hd.type_ {
+    token.Less | token.Greater | token.LessEqual | token.GreaterEqual -> {
+      let #(right, state) = parse_term(ParseState(..state, tokens: r))
+      parse_comparison_loop(expr.Binary(left, hd, right), state)
+    }
+    _ -> #(left, state)
+  }
+}
+
+fn parse_term(state: ParseState) -> #(Expr, ParseState) {
+  let #(left, state) = parse_factor(state)
+  parse_term_loop(left, state)
+}
+
+fn parse_term_loop(left: Expr, state: ParseState) -> #(Expr, ParseState) {
+  let assert [hd, ..r] = state.tokens
+  case hd.type_ {
+    token.Plus | token.Minus -> {
+      let #(right, state) = parse_factor(ParseState(..state, tokens: r))
+      parse_term_loop(expr.Binary(left, hd, right), state)
+    }
+    _ -> #(left, state)
+  }
 }
 
 fn parse_factor(state: ParseState) -> #(Expr, ParseState) {
-  let #(left, left_state) = parse_unary(state)
-  let assert [hd, ..r] = left_state.tokens
+  let #(left, state) = parse_unary(state)
+  parse_factor_loop(left, state)
+}
+
+fn parse_factor_loop(left: Expr, state: ParseState) -> #(Expr, ParseState) {
+  let assert [hd, ..r] = state.tokens
   case hd.type_ {
     token.Star | token.Slash -> {
-      let #(next_expression, next_state) =
-        parse_unary(ParseState(..left_state, tokens: r))
-      #(expr.Binary(left, hd, next_expression), next_state)
+      let #(right, state) = parse_unary(ParseState(..state, tokens: r))
+      parse_factor_loop(expr.Binary(left, hd, right), state)
     }
-    _ -> #(left, left_state)
+    _ -> #(left, state)
   }
 }
 
