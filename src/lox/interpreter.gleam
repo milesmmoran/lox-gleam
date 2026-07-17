@@ -9,7 +9,6 @@ pub fn eval(statements: List(Statement)) -> Nil {
         expr.ExprStmt(expr) -> {
           eval_expr(expr)
           eval(r)
-          Nil
         }
         _ -> panic
       }

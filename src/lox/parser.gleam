@@ -18,6 +18,21 @@ pub fn parse(tokens: List(Token)) -> ParseResult {
   ParseResult(Ok(statements), list.reverse(state.errors))
 }
 
+fn consume(
+  state: ParseState,
+  expected: token.TokenType,
+  message: String,
+) -> ParseState {
+  case state.tokens {
+    [hd, ..rest] if hd.type_ == expected -> ParseState(..state, tokens: rest)
+    [hd, ..] -> {
+      let err = ParseError(message, hd)
+      ParseState(..state, errors: [err, ..state.errors])
+    }
+    [] -> state
+  }
+}
+
 fn parse_statements(
   state: ParseState,
   statements: List(Statement),
@@ -29,8 +44,10 @@ fn parse_statements(
     }
     _ -> {
       let #(expr, new_state) = parse_expression(state)
-      let es = expr.ExprStmt(expr)
-      parse_statements(new_state, [es, ..statements])
+      let state =
+        consume(new_state, token.Semicolon, "Expected ';' after expression.")
+      let statement = expr.ExprStmt(expr)
+      parse_statements(state, [statement, ..statements])
     }
   }
 }
