@@ -111,6 +111,16 @@ fn eval_statement(statement: Declaration, env: Env) -> Env {
         False, option.None -> env
       }
     }
+    expr.Statement(expr.WhileStmt(cond, then_branch)) -> {
+      let #(cond_val, env) = eval_expr(cond, env)
+      case is_truthy(cond_val) {
+        True -> {
+          let env = eval_statement(then_branch, env)
+          eval_statement(then_branch, env)
+        }
+        False -> env
+      }
+    }
   }
 }
 
