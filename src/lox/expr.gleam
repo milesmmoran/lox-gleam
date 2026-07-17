@@ -16,6 +16,7 @@ pub type Statement {
 
 pub type Expr {
   Binary(left: Expr, op: Token, right: Expr)
+  Logical(left: Expr, op: Token, right: Expr)
   Unary(op: Token, operand: Expr)
   Literal(value: LiteralValue)
   Grouping(expr: Expr)

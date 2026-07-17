@@ -3,7 +3,7 @@ import gleam/int
 import gleam/list
 import gleam/option.{None, Some}
 import lox/error.{type ParseError, ParseError}
-import lox/expr.{type Declaration, type Expr, type Statement}
+import lox/expr.{type Declaration, type Expr}
 import lox/token.{type Token}
 
 pub type ParseResult {
@@ -133,15 +133,47 @@ fn parse_expression(state: ParseState) -> #(Expr, ParseState) {
 }
 
 fn parse_assignment(state: ParseState) -> #(Expr, ParseState) {
-  let #(left, state) = parse_equality(state)
+  let #(left, state) = parse_or(state)
   case peek(state).type_ {
     token.Equal -> {
       let #(_, state1) = advance(state)
-      let #(expr, state2) = parse_assignment(state1)
+      let #(expr, state2) = parse_or(state1)
       case left {
         expr.Identifier(name) -> #(expr.Assignment(name, expr), state2)
         _ -> panic
       }
+    }
+    _ -> #(left, state)
+  }
+}
+
+fn parse_or(state: ParseState) -> #(Expr, ParseState) {
+  let #(left, state) = parse_and(state)
+  parse_or_loop(left, state)
+}
+
+fn parse_or_loop(left: Expr, state: ParseState) -> #(Expr, ParseState) {
+  let assert [hd, ..r] = state.tokens
+  case hd.type_ {
+    token.Or -> {
+      let #(right, state) = parse_and(ParseState(..state, tokens: r))
+      parse_or_loop(expr.Logical(left, hd, right), state)
+    }
+    _ -> #(left, state)
+  }
+}
+
+fn parse_and(state: ParseState) -> #(Expr, ParseState) {
+  let #(left, state) = parse_equality(state)
+  parse_and_loop(left, state)
+}
+
+fn parse_and_loop(left: Expr, state: ParseState) -> #(Expr, ParseState) {
+  let assert [hd, ..r] = state.tokens
+  case hd.type_ {
+    token.And -> {
+      let #(right, state) = parse_equality(ParseState(..state, tokens: r))
+      parse_and_loop(expr.Logical(left, hd, right), state)
     }
     _ -> #(left, state)
   }
