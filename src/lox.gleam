@@ -1,6 +1,6 @@
 import argv
 import gleam/io
-import lox/intrepeter
+import lox/interpreter
 import lox/lexer
 import lox/parser
 import simplifile

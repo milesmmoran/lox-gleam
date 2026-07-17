@@ -6,9 +6,9 @@ pub fn eval(expr: Expr) -> expr.LiteralValue {
   case expr {
     expr.Literal(val) -> val
     expr.Grouping(e) -> eval(e)
-    expr.Unary(operand, expr) -> {
-      let val = eval(expr)
-      case operand.type_ {
+    expr.Unary(op, operand) -> {
+      let val = eval(operand)
+      case op.type_ {
         token.Minus ->
           case val {
             expr.NumberVal(n) -> expr.NumberVal(float.negate(n))
@@ -68,19 +68,8 @@ pub fn eval(expr: Expr) -> expr.LiteralValue {
             _, _ -> panic
           }
 
-        token.EqualEqual ->
-          case left_val, right_val {
-            expr.NumberVal(l), expr.NumberVal(r) -> expr.BoolVal(l == r)
-            expr.BoolVal(l), expr.BoolVal(r) -> expr.BoolVal(l == r)
-            _, _ -> panic
-          }
-
-        token.BangEqual ->
-          case left_val, right_val {
-            expr.NumberVal(l), expr.NumberVal(r) -> expr.BoolVal(l != r)
-            expr.BoolVal(l), expr.BoolVal(r) -> expr.BoolVal(l != r)
-            _, _ -> panic
-          }
+        token.EqualEqual -> expr.BoolVal(left_val == right_val)
+        token.BangEqual -> expr.BoolVal(left_val != right_val)
 
         _ -> panic
       }
