@@ -9,6 +9,8 @@ pub type Declaration {
 pub type Statement {
   ExprStmt(expr: Expr)
   PrintStmt(expr: Expr)
+  BlockStmt(declarations: List(Declaration))
+  IfStmt(cond: Expr, then_branch: Statement, else_branch: Option(Statement))
 }
 
 pub type Expr {
@@ -16,6 +18,8 @@ pub type Expr {
   Unary(op: Token, operand: Expr)
   Literal(value: LiteralValue)
   Grouping(expr: Expr)
+  Identifier(name: String)
+  Assignment(name: String, expr: Expr)
 }
 
 pub type LiteralValue {

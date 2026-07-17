@@ -1,6 +1,7 @@
 import gleam/float
 import gleam/int
 import gleam/list
+import gleam/option
 import lox/error.{type ParseError, ParseError}
 import lox/expr.{type Declaration, type Expr, type Statement}
 import lox/token.{type Token}
@@ -33,17 +34,53 @@ fn consume(
   }
 }
 
+fn peek(state: ParseState) -> Token {
+  let assert [hd, ..] = state.tokens
+  hd
+}
+
+fn advance(state: ParseState) -> #(Token, ParseState) {
+  let assert [hd, ..rest] = state.tokens
+  #(hd, ParseState(..state, tokens: rest))
+}
+
 fn parse_declarations(
   state: ParseState,
   declarations: List(Declaration),
 ) -> #(List(Declaration), ParseState) {
-  let assert [hd, ..r] = state.tokens
-  case hd.type_ {
+  let #(hd1, state1) = advance(state)
+  case hd1.type_ {
     token.Eof -> {
       #(list.reverse(declarations), state)
     }
+    token.Var -> {
+      let #(hd2, state2) = advance(state1)
+      case hd2.type_ {
+        token.Identifier -> {
+          let name = hd2.lexeme
+          let #(hd3, state3) = advance(state2)
+          case hd3.type_ {
+            token.Equal -> {
+              let #(init, state4) = parse_expression(state3)
+              let state5 =
+                consume(state4, token.Semicolon, "Expected ';' after value.")
+              let decl = expr.VarDecl(name, option.Some(init))
+              parse_declarations(state5, [decl, ..declarations])
+            }
+            token.Semicolon -> {
+              let decl = expr.VarDecl(name, option.None)
+              parse_declarations(state3, [decl, ..declarations])
+            }
+            _ -> panic
+          }
+        }
+        _ -> panic as "you need to finish your variable decl, no identifier"
+      }
+      // if not identifer, throw.
+    }
     token.Print -> {
-      let #(expr, new_state) = parse_expression(ParseState(..state, tokens: r))
+      let #(expr, new_state) =
+        parse_expression(ParseState(..state, tokens: state1.tokens))
       let state =
         consume(new_state, token.Semicolon, "Expected ';' after expression.")
       let statement = expr.PrintStmt(expr)
@@ -62,7 +99,22 @@ fn parse_declarations(
 }
 
 fn parse_expression(state: ParseState) -> #(Expr, ParseState) {
-  parse_equality(state)
+  parse_assignment(state)
+}
+
+fn parse_assignment(state: ParseState) -> #(Expr, ParseState) {
+  let #(left, state) = parse_equality(state)
+  case peek(state).type_ {
+    token.Equal -> {
+      let #(_, state1) = advance(state)
+      let #(expr, state2) = parse_assignment(state1)
+      case left {
+        expr.Identifier(name) -> #(expr.Assignment(name, expr), state2)
+        _ -> panic
+      }
+    }
+    _ -> #(left, state)
+  }
 }
 
 fn parse_equality(state: ParseState) -> #(Expr, ParseState) {
@@ -159,6 +211,7 @@ fn parse_primary(state: ParseState) -> #(Expr, ParseState) {
     token.False -> #(expr.Literal(expr.BoolVal(False)), state)
     token.True -> #(expr.Literal(expr.BoolVal(True)), state)
     token.Nil -> #(expr.Literal(expr.NilVal), state)
+    token.Identifier -> #(expr.Identifier(hd.lexeme), state)
     token.LeftParen -> {
       let #(inner, state) = parse_expression(state)
       let state = case state.tokens {

@@ -30,8 +30,7 @@ fn run(source: String) -> Nil {
   let scan_res = lexer.scan(source)
   let parse_res = parser.parse(scan_res.tokens)
   case parse_res.expr {
-    Ok(statements) -> interpreter.eval(statements)
+    Ok(declarations) -> interpreter.eval(declarations)
     _ -> panic
   }
-  Nil
 }
