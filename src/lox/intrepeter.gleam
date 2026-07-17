@@ -14,12 +14,7 @@ pub fn eval(expr: Expr) -> expr.LiteralValue {
             expr.NumberVal(n) -> expr.NumberVal(float.negate(n))
             _ -> panic
           }
-        token.Bang -> {
-          case val {
-            expr.BoolVal(b) -> expr.BoolVal(!b)
-            _ -> panic
-          }
-        }
+        token.Bang -> expr.BoolVal(!is_truthy(val))
         _ -> panic
       }
     }
@@ -75,19 +70,15 @@ pub fn eval(expr: Expr) -> expr.LiteralValue {
 
         token.EqualEqual ->
           case left_val, right_val {
-            expr.NumberVal(_), expr.NumberVal(_) ->
-              expr.BoolVal(is_truthy(left_val) == is_truthy(right_val))
-            expr.BoolVal(_), expr.BoolVal(_) ->
-              expr.BoolVal(is_truthy(left_val) == is_truthy(right_val))
+            expr.NumberVal(l), expr.NumberVal(r) -> expr.BoolVal(l == r)
+            expr.BoolVal(l), expr.BoolVal(r) -> expr.BoolVal(l == r)
             _, _ -> panic
           }
 
         token.BangEqual ->
           case left_val, right_val {
-            expr.NumberVal(_), expr.NumberVal(_) ->
-              expr.BoolVal(is_truthy(left_val) != is_truthy(right_val))
-            expr.BoolVal(_), expr.BoolVal(_) ->
-              expr.BoolVal(is_truthy(left_val) != is_truthy(right_val))
+            expr.NumberVal(l), expr.NumberVal(r) -> expr.BoolVal(l != r)
+            expr.BoolVal(l), expr.BoolVal(r) -> expr.BoolVal(l != r)
             _, _ -> panic
           }
 
