@@ -1,4 +1,6 @@
 import gleam/float
+import gleam/io
+import gleam/string
 import lox/expr.{type Expr, type Statement}
 import lox/token
 
@@ -8,6 +10,10 @@ pub fn eval(statements: List(Statement)) -> Nil {
       case hd {
         expr.ExprStmt(expr) -> {
           eval_expr(expr)
+          eval(r)
+        }
+        expr.PrintStmt(expr) -> {
+          io.println(string.inspect(eval_expr(expr)))
           eval(r)
         }
         _ -> panic

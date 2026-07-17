@@ -1,4 +1,10 @@
+import gleam/option.{type Option}
 import lox/token.{type Token}
+
+pub type Declaration {
+  VarDecl(var: String, expr: Option(Expr))
+  Statement(statement: Statement)
+}
 
 pub type Statement {
   ExprStmt(expr: Expr)

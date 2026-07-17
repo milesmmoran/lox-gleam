@@ -2,11 +2,11 @@ import gleam/float
 import gleam/int
 import gleam/list
 import lox/error.{type ParseError, ParseError}
-import lox/expr.{type Expr, type Statement}
+import lox/expr.{type Declaration, type Expr, type Statement}
 import lox/token.{type Token}
 
 pub type ParseResult {
-  ParseResult(expr: Result(List(Statement), Nil), errors: List(ParseError))
+  ParseResult(expr: Result(List(Declaration), Nil), errors: List(ParseError))
 }
 
 type ParseState {
@@ -14,8 +14,8 @@ type ParseState {
 }
 
 pub fn parse(tokens: List(Token)) -> ParseResult {
-  let #(statements, state) = parse_statements(ParseState(tokens, []), [])
-  ParseResult(Ok(statements), list.reverse(state.errors))
+  let #(declarations, state) = parse_declarations(ParseState(tokens, []), [])
+  ParseResult(Ok(declarations), list.reverse(state.errors))
 }
 
 fn consume(
@@ -33,28 +33,30 @@ fn consume(
   }
 }
 
-fn parse_statements(
+fn parse_declarations(
   state: ParseState,
-  statements: List(Statement),
-) -> #(List(Statement), ParseState) {
+  declarations: List(Declaration),
+) -> #(List(Declaration), ParseState) {
   let assert [hd, ..r] = state.tokens
   case hd.type_ {
     token.Eof -> {
-      #(list.reverse(statements), state)
+      #(list.reverse(declarations), state)
     }
     token.Print -> {
       let #(expr, new_state) = parse_expression(ParseState(..state, tokens: r))
       let state =
         consume(new_state, token.Semicolon, "Expected ';' after expression.")
       let statement = expr.PrintStmt(expr)
-      parse_statements(state, [statement, ..statements])
+      let decl = expr.Statement(statement)
+      parse_declarations(state, [decl, ..declarations])
     }
     _ -> {
       let #(expr, new_state) = parse_expression(state)
       let state =
         consume(new_state, token.Semicolon, "Expected ';' after expression.")
       let statement = expr.ExprStmt(expr)
-      parse_statements(state, [statement, ..statements])
+      let decl = expr.Statement(statement)
+      parse_declarations(state, [decl, ..declarations])
     }
   }
 }
