@@ -1,7 +1,8 @@
 import argv
 import gleam/io
-import lox/format
+import lox/intrepeter
 import lox/lexer
+import lox/parser
 import simplifile
 
 pub fn main() -> Nil {
@@ -26,8 +27,11 @@ fn run_file(path: String) -> Nil {
 }
 
 fn run(source: String) -> Nil {
-  source
-  |> lexer.scan
-  |> format.format_result
-  |> io.print
+  let scan_res = lexer.scan(source)
+  let parse_res = parser.parse(scan_res.tokens)
+  case parse_res.expr {
+    Ok(expr) -> interpreter.eval(expr)
+    _ -> panic
+  }
+  Nil
 }
