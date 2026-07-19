@@ -2,7 +2,7 @@ import gleam/dict
 import gleam/float
 import gleam/io
 import gleam/list
-import gleam/option
+import gleam/option.{None, Some}
 import lox/expr.{type Declaration, type Expr}
 import lox/token
 
@@ -109,6 +109,32 @@ fn eval_statement(statement: Declaration, env: Env) -> Env {
         True, _ -> eval_statement(then_branch, env)
         False, option.Some(else_stmt) -> eval_statement(else_stmt, env)
         False, option.None -> env
+      }
+    }
+    expr.Statement(expr.ForStmt(init, cond, incr, then_branch)) -> {
+      let init_env = case init {
+        None -> env
+        Some(i) -> eval_statement(i, env)
+      }
+
+      let #(cond_val, cond_env) = case cond {
+        None -> #(expr.BoolVal(True), init_env)
+        Some(c) -> eval_expr(c, init_env)
+      }
+
+      case is_truthy(cond_val) {
+        True -> {
+          let e = eval_statement(then_branch, cond_env)
+          let e2 = case incr {
+            None -> e
+            Some(i) -> {
+              let #(_, e2) = eval_expr(i, cond_env)
+              e2
+            }
+          }
+          eval_statement(then_branch, e2)
+        }
+        False -> cond_env
       }
     }
     expr.Statement(expr.WhileStmt(cond, then_branch)) -> {

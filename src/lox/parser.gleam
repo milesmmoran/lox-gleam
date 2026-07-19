@@ -110,6 +110,49 @@ fn parse_declaration(state: ParseState) -> #(Declaration, ParseState) {
         }
       }
     }
+    token.For -> {
+      let post_paren_state =
+        consume(state1, token.LeftParen, "Expected '(' after for.")
+      let init_peek = peek(post_paren_state)
+      // init
+      let #(init, post_init_state) = case init_peek.type_ {
+        token.Semicolon -> #(
+          None,
+          consume(post_paren_state, token.Semicolon, ""),
+        )
+        _ -> {
+          let #(decl, post_init_state) = parse_declaration(post_paren_state)
+          #(Some(decl), post_init_state)
+        }
+      }
+      // cond
+      let cond_peek = peek(post_init_state)
+      let #(cond, post_cond_state) = case cond_peek.type_ {
+        token.Semicolon -> #(None, consume(post_init_state, token.Semicolon, ""))
+        _ -> {
+          let #(cond, post_cond_state) = parse_expression(post_init_state)
+          #(Some(cond), post_cond_state)
+        }
+      }
+      // incr
+      let incr_peek = peek(post_cond_state)
+      let #(incr, post_incr_state) = case incr_peek.type_ {
+        token.RightParen -> #(
+          None,
+          consume(post_cond_state, token.RightParen, ""),
+        )
+        _ -> {
+          let #(incr, post_incr_expr_state) = parse_expression(post_cond_state)
+          let post_incr_state =
+            consume(post_incr_expr_state, token.RightParen, "")
+          #(Some(incr), post_incr_state)
+        }
+      }
+      let #(then, post_for_state) = parse_declaration(post_incr_state)
+      let for_declr = expr.ForStmt(init, cond, incr, then)
+      let s = expr.Statement(for_declr)
+      #(s, post_for_state)
+    }
     token.While -> {
       let #(cond, post_cond_state) = parse_expression(state1)
       let #(then, post_while_state) = parse_declaration(post_cond_state)

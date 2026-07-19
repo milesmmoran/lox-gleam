@@ -12,6 +12,12 @@ pub type Statement {
   BlockStmt(declarations: List(Declaration))
   IfStmt(cond: Expr, then_branch: Declaration, else_branch: Option(Declaration))
   WhileStmt(cond: Expr, body: Declaration)
+  ForStmt(
+    init: Option(Declaration),
+    cond: Option(Expr),
+    incr: Option(Expr),
+    body: Declaration,
+  )
 }
 
 pub type Expr {
