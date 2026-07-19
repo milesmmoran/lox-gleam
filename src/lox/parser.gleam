@@ -130,7 +130,9 @@ fn parse_declaration(state: ParseState) -> #(Declaration, ParseState) {
       let #(cond, post_cond_state) = case cond_peek.type_ {
         token.Semicolon -> #(None, consume(post_init_state, token.Semicolon, ""))
         _ -> {
-          let #(cond, post_cond_state) = parse_expression(post_init_state)
+          let #(cond, post_cond_expr_state) = parse_expression(post_init_state)
+          let post_cond_state =
+            consume(post_cond_expr_state, token.Semicolon, "")
           #(Some(cond), post_cond_state)
         }
       }
