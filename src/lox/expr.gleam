@@ -1,8 +1,10 @@
+import gleam/dict
 import gleam/option.{type Option}
 import lox/token.{type Token}
 
 pub type Declaration {
   VarDecl(var: String, expr: Option(Expr))
+  FunDecl(name: String, params: List(String), body: Declaration)
   Statement(statement: Statement)
 }
 
@@ -35,4 +37,12 @@ pub type LiteralValue {
   StringVal(String)
   BoolVal(Bool)
   NilVal
+  FunVal(params: List(String), body: Declaration, env: Env)
+}
+
+pub type Scope =
+  dict.Dict(String, LiteralValue)
+
+pub type Env {
+  Env(scopes: List(Scope))
 }

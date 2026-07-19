@@ -84,6 +84,20 @@ fn parse_declaration(state: ParseState) -> #(Declaration, ParseState) {
         _ -> panic as "you need to finish your variable decl, no identifier"
       }
     }
+    token.Fun -> {
+      // consume FUN
+      let #(iden, state2) = advance(state1)
+      case iden.type_ {
+        token.Identifier -> {
+          let state3 = consume(state2, token.LeftParen, "Expecting opening (")
+          let #(args, state4) = parse_fun_arg_loop(state3, [])
+          let #(body, state5) = parse_declaration(state4)
+          let func = expr.FunDecl(iden.lexeme, args, body)
+          #(func, state5)
+        }
+        _ -> panic as "expected identifier"
+      }
+    }
     token.LeftBrace -> {
       let #(decls, state2) = parse_block_statement_loop(state1, [])
       let st = expr.BlockStmt(decls)
@@ -179,6 +193,36 @@ fn parse_declaration(state: ParseState) -> #(Declaration, ParseState) {
       let decl = expr.Statement(statement)
       #(decl, state)
     }
+  }
+}
+
+fn parse_fun_arg_loop(
+  state: ParseState,
+  args: List(String),
+) -> #(List(String), ParseState) {
+  let hd = peek(state)
+  case hd.type_ {
+    token.Eof -> panic as "unterminated"
+    token.RightParen -> {
+      let state2 = consume(state, token.RightParen, "")
+      #(list.reverse(args), state2)
+    }
+    token.Identifier -> {
+      let #(hd1, state2) = advance(state)
+      let hd2 = peek(state2)
+      case hd2.type_ {
+        token.Eof -> panic as "unterminated"
+        token.Comma -> {
+          let state3 = consume(state2, token.Comma, "")
+          parse_fun_arg_loop(state3, [hd1.lexeme, ..args])
+        }
+        token.RightParen -> {
+          parse_fun_arg_loop(state2, [hd1.lexeme, ..args])
+        }
+        _ -> panic
+      }
+    }
+    _ -> panic as "unexpected token during fun initiall"
   }
 }
 

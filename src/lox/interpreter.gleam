@@ -3,15 +3,8 @@ import gleam/float
 import gleam/io
 import gleam/list
 import gleam/option.{None, Some}
-import lox/expr.{type Declaration, type Expr}
+import lox/expr.{type Declaration, type Env, type Expr, type Scope, Env}
 import lox/token
-
-pub type Scope =
-  dict.Dict(String, expr.LiteralValue)
-
-pub type Env {
-  Env(scopes: List(Scope))
-}
 
 pub fn eval(decls: List(Declaration)) -> Nil {
   let env = Env([dict.new()])
@@ -89,6 +82,9 @@ fn eval_statement(statement: Declaration, env: Env) -> Env {
       add_var(env, name, v)
     }
     expr.VarDecl(name, option.None) -> add_var(env, name, expr.NilVal)
+    expr.FunDecl(name, params, body) -> {
+      add_var(env, name, expr.FunVal(params, body, env))
+    }
     expr.Statement(expr.ExprStmt(e)) -> {
       let #(_, env) = eval_expr(e, env)
       env
@@ -273,6 +269,7 @@ fn stringify(v: expr.LiteralValue) -> String {
     expr.BoolVal(False) -> "false"
     expr.NumberVal(n) -> float.to_string(n)
     expr.StringVal(s) -> s
+    expr.FunVal(_, _, _) -> "Function " <> "TBD"
   }
 }
 
