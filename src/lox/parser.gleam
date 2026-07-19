@@ -7,7 +7,7 @@ import lox/expr.{type Declaration, type Expr}
 import lox/token.{type Token}
 
 pub type ParseResult {
-  ParseResult(expr: Result(List(Declaration), Nil), errors: List(ParseError))
+  ParseResult(program: Result(List(Declaration), Nil), errors: List(ParseError))
 }
 
 type ParseState {

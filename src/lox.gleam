@@ -29,7 +29,7 @@ fn run_file(path: String) -> Nil {
 fn run(source: String) -> Nil {
   let scan_res = lexer.scan(source)
   let parse_res = parser.parse(scan_res.tokens)
-  case parse_res.expr {
+  case parse_res.program {
     Ok(declarations) -> interpreter.eval(declarations)
     _ -> panic
   }
