@@ -84,6 +84,12 @@ fn parse_declaration(state: ParseState) -> #(Declaration, ParseState) {
         _ -> panic as "you need to finish your variable decl, no identifier"
       }
     }
+    token.LeftBrace -> {
+      let #(decls, state2) = parse_block_statement_loop(state1, [])
+      let st = expr.BlockStmt(decls)
+      let decl = expr.Statement(st)
+      #(decl, state2)
+    }
     token.Print -> {
       let #(expr, state) = parse_expression(state1)
       let state =
@@ -128,7 +134,10 @@ fn parse_declaration(state: ParseState) -> #(Declaration, ParseState) {
       // cond
       let cond_peek = peek(post_init_state)
       let #(cond, post_cond_state) = case cond_peek.type_ {
-        token.Semicolon -> #(None, consume(post_init_state, token.Semicolon, ""))
+        token.Semicolon -> #(
+          None,
+          consume(post_init_state, token.Semicolon, ""),
+        )
         _ -> {
           let #(cond, post_cond_expr_state) = parse_expression(post_init_state)
           let post_cond_state =
@@ -169,6 +178,24 @@ fn parse_declaration(state: ParseState) -> #(Declaration, ParseState) {
       let statement = expr.ExprStmt(expr)
       let decl = expr.Statement(statement)
       #(decl, state)
+    }
+  }
+}
+
+fn parse_block_statement_loop(
+  state: ParseState,
+  decls: List(Declaration),
+) -> #(List(Declaration), ParseState) {
+  let hd = peek(state)
+  case hd.type_ {
+    token.Eof -> panic as "unterminated block"
+    token.RightBrace -> {
+      let state2 = consume(state, token.RightBrace, "")
+      #(list.reverse(decls), state2)
+    }
+    _ -> {
+      let #(decl, state2) = parse_declaration(state)
+      parse_block_statement_loop(state2, [decl, ..decls])
     }
   }
 }
