@@ -89,6 +89,11 @@ fn eval_statement(statement: Declaration, env: Env) -> Env {
       let #(_, env) = eval_expr(e, env)
       env
     }
+    expr.Statement(expr.ReturnStmt(e)) -> {
+      // return
+      let #(_, env) = eval_expr(e, env)
+      env
+    }
     expr.Statement(expr.PrintStmt(e)) -> {
       let #(v, env) = eval_expr(e, env)
       io.println(stringify(v))
