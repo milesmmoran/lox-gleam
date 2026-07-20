@@ -151,19 +151,26 @@ fn eval_statement(
       }
     }
     expr.Statement(expr.WhileStmt(cond, then_branch)) -> {
-      #(None, while_loop(cond, then_branch, env))
+      while_loop(cond, then_branch, env)
     }
   }
 }
 
-fn while_loop(cond: expr.Expr, then: Declaration, env: Env) -> Env {
+fn while_loop(
+  cond: expr.Expr,
+  then: Declaration,
+  env: Env,
+) -> #(option.Option(expr.LiteralValue), Env) {
   let #(cond_val, env2) = eval_expr(cond, env)
   case is_truthy(cond_val) {
     True -> {
-      let #(_, env3) = eval_statement(then, env2)
-      while_loop(cond, then, env3)
+      let #(val, env3) = eval_statement(then, env2)
+      case val {
+        Some(_) -> #(val, env3)
+        _ -> while_loop(cond, then, env3)
+      }
     }
-    False -> env2
+    False -> #(None, env2)
   }
 }
 
