@@ -189,7 +189,13 @@ fn parse_declaration(state: ParseState) -> #(Declaration, ParseState) {
       let #(expr, post_expr_state) = parse_expression(state1)
       let decl = expr.ReturnStmt(expr)
       let s = expr.Statement(decl)
-      #(s, post_expr_state)
+      let p =
+        consume(
+          post_expr_state,
+          token.Semicolon,
+          "Expected ';' after expression.",
+        )
+      #(s, p)
     }
     _ -> {
       let #(expr, new_state) = parse_expression(state)

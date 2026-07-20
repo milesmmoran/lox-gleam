@@ -195,6 +195,7 @@ fn eval_expr(e: Expr, env: Env) -> #(expr.LiteralValue, Env) {
             Some(v) -> v
           }
           // we will update the closure for the function with this.
+          // TODO: Update closer
           let _ = pop_scope(new_closure)
 
           #(v, callee_env)
