@@ -75,41 +75,50 @@ fn get_var(env: Env, name: String) -> expr.LiteralValue {
   }
 }
 
-fn eval_statement(statement: Declaration, env: Env) -> Env {
+fn eval_statement(
+  statement: Declaration,
+  env: Env,
+) -> #(option.Option(expr.LiteralValue), Env) {
   case statement {
     expr.VarDecl(name, option.Some(e)) -> {
       let #(v, env) = eval_expr(e, env)
-      add_var(env, name, v)
+      #(None, add_var(env, name, v))
     }
-    expr.VarDecl(name, option.None) -> add_var(env, name, expr.NilVal)
+    expr.VarDecl(name, option.None) -> #(None, add_var(env, name, expr.NilVal))
     expr.FunDecl(name, params, body) -> {
-      add_var(env, name, expr.FunVal(params, body, env))
+      #(None, add_var(env, name, expr.FunVal(params, body, env)))
     }
     expr.Statement(expr.ExprStmt(e)) -> {
       let #(_, env) = eval_expr(e, env)
-      env
+      #(None, env)
     }
     expr.Statement(expr.ReturnStmt(e)) -> {
       // return
-      let #(_, env) = eval_expr(e, env)
-      env
+      let #(v, env) = eval_expr(e, env)
+      #(Some(v), env)
     }
     expr.Statement(expr.PrintStmt(e)) -> {
       let #(v, env) = eval_expr(e, env)
       io.println(stringify(v))
-      env
+      #(None, env)
     }
     expr.Statement(expr.BlockStmt(decls)) -> {
       let new_env = add_scope(env)
       let post_env = eval_statements(decls, new_env)
-      pop_scope(post_env)
+      #(None, pop_scope(post_env))
     }
     expr.Statement(expr.IfStmt(cond, then_branch, else_branch)) -> {
       let #(cond_val, env) = eval_expr(cond, env)
       case is_truthy(cond_val), else_branch {
-        True, _ -> eval_statement(then_branch, env)
-        False, option.Some(else_stmt) -> eval_statement(else_stmt, env)
-        False, option.None -> env
+        True, _ -> {
+          let #(_, e) = eval_statement(then_branch, env)
+          #(None, e)
+        }
+        False, option.Some(else_stmt) -> {
+          let #(_, e) = eval_statement(else_stmt, env)
+          #(None, e)
+        }
+        False, option.None -> #(None, env)
       }
     }
     expr.Statement(expr.ForStmt(init, cond, incr, then_branch)) -> {
@@ -137,7 +146,7 @@ fn eval_statement(statement: Declaration, env: Env) -> Env {
       }
     }
     expr.Statement(expr.WhileStmt(cond, then_branch)) -> {
-      while_loop(cond, then_branch, env)
+      #(None, while_loop(cond, then_branch, env))
     }
   }
 }
@@ -146,7 +155,7 @@ fn while_loop(cond: expr.Expr, then: Declaration, env: Env) -> Env {
   let #(cond_val, env2) = eval_expr(cond, env)
   case is_truthy(cond_val) {
     True -> {
-      let env3 = eval_statement(then, env2)
+      let #(_, env3) = eval_statement(then, env2)
       while_loop(cond, then, env3)
     }
     False -> env2
