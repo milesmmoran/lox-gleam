@@ -88,7 +88,7 @@ fn eval_statement(
     }
     expr.VarDecl(name, option.None) -> #(None, add_var(env, name, expr.NilVal))
     expr.FunDecl(name, params, body) -> {
-      #(None, add_var(env, name, expr.FunVal(params, body, env)))
+      #(None, add_var(env, name, expr.FunVal(name, params, body, env)))
     }
     expr.Statement(expr.ExprStmt(e)) -> {
       let #(_, env) = eval_expr(e, env)
@@ -183,7 +183,7 @@ fn eval_expr(e: Expr, env: Env) -> #(expr.LiteralValue, Env) {
     expr.Call(callee, _, args) -> {
       let #(func, new_env) = eval_expr(callee, env)
       case func {
-        expr.FunVal(params, body, closure) -> {
+        expr.FunVal(name, params, body, closure) -> {
           let #(evaled_args, callee_env) = eval_args(args, new_env, [])
           let c = bind_closure(evaled_args, params, closure)
           let #(val, new_closure) = eval_statement(body, c)
@@ -191,11 +191,10 @@ fn eval_expr(e: Expr, env: Env) -> #(expr.LiteralValue, Env) {
             None -> expr.NilVal
             Some(v) -> v
           }
-          // we will update the closure for the function with this.
-          // TODO: Update closer
-          let _ = pop_scope(new_closure)
+          let cc = pop_scope(new_closure)
+          let ff = expr.FunVal(..func, env: cc)
 
-          #(v, callee_env)
+          #(v, update_var(callee_env, name, ff))
         }
         _ -> panic as "not callable"
       }
@@ -312,7 +311,7 @@ fn stringify(v: expr.LiteralValue) -> String {
     expr.BoolVal(False) -> "false"
     expr.NumberVal(n) -> float.to_string(n)
     expr.StringVal(s) -> s
-    expr.FunVal(_, _, _) -> "Function " <> "TBD"
+    expr.FunVal(name, _, _, _) -> "Function '" <> name <> "'"
   }
 }
 

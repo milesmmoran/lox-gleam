@@ -39,7 +39,7 @@ pub type LiteralValue {
   StringVal(String)
   BoolVal(Bool)
   NilVal
-  FunVal(params: List(String), body: Declaration, env: Env)
+  FunVal(name: String, params: List(String), body: Declaration, env: Env)
 }
 
 pub type Scope =
