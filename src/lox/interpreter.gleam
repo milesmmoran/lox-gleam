@@ -12,12 +12,17 @@ pub fn eval(decls: List(Declaration)) -> Nil {
   Nil
 }
 
-fn eval_statements(statements: List(Declaration), env: Env) -> Env {
+fn eval_statements(
+  statements: List(Declaration),
+  env: Env,
+) -> #(option.Option(expr.LiteralValue), Env) {
   case statements {
-    [] -> env
+    [] -> #(None, env)
     [hd, ..rest] -> {
-      let #(_, new_env) = eval_statement(hd, env)
-      eval_statements(rest, new_env)
+      case eval_statement(hd, env) {
+        #(Some(value), new_env) -> #(Some(value), new_env)
+        #(None, new_env) -> eval_statements(rest, new_env)
+      }
     }
   }
 }
@@ -104,19 +109,19 @@ fn eval_statement(
     }
     expr.Statement(expr.BlockStmt(decls)) -> {
       let new_env = add_scope(env)
-      let post_env = eval_statements(decls, new_env)
-      #(None, pop_scope(post_env))
+      let #(v, post_env) = eval_statements(decls, new_env)
+      #(v, pop_scope(post_env))
     }
     expr.Statement(expr.IfStmt(cond, then_branch, else_branch)) -> {
       let #(cond_val, env) = eval_expr(cond, env)
       case is_truthy(cond_val), else_branch {
         True, _ -> {
-          let #(_, e) = eval_statement(then_branch, env)
-          #(None, e)
+          let #(v, e) = eval_statement(then_branch, env)
+          #(v, e)
         }
         False, option.Some(else_stmt) -> {
-          let #(_, e) = eval_statement(else_stmt, env)
-          #(None, e)
+          let #(v, e) = eval_statement(else_stmt, env)
+          #(v, e)
         }
         False, option.None -> #(None, env)
       }
