@@ -43,8 +43,12 @@ pub type LiteralValue {
 }
 
 pub type Scope =
-  dict.Dict(String, LiteralValue)
+  dict.Dict(String, Int)
+
+// ID to Store
+pub type Store =
+  dict.Dict(Int, LiteralValue)
 
 pub type Env {
-  Env(scopes: List(Scope))
+  Env(scopes: List(Scope), store: Store, next_id: Int)
 }

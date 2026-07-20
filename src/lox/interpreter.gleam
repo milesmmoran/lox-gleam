@@ -2,12 +2,12 @@ import gleam/dict
 import gleam/float
 import gleam/io
 import gleam/list
-import gleam/option.{None, Some}
-import lox/expr.{type Declaration, type Env, type Expr, type Scope, Env}
+import gleam/option.{type Option, None, Some}
+import lox/expr.{type Declaration, type Env, type Expr, Env}
 import lox/token
 
 pub fn eval(decls: List(Declaration)) -> Nil {
-  let env = Env([dict.new()])
+  let env = Env([dict.new()], dict.new(), 0)
   let _ = eval_statements(decls, env)
   Nil
 }
@@ -29,54 +29,51 @@ fn eval_statements(
 
 fn add_var(env: Env, name: String, value: expr.LiteralValue) -> Env {
   let assert [hd, ..r] = env.scopes
-  let hd2 = dict.insert(hd, name, value)
-  Env([hd2, ..r])
+  let id = env.next_id
+  let hd2 = dict.insert(hd, name, id)
+  let store = dict.insert(env.store, id, value)
+  Env([hd2, ..r], store, id + 1)
 }
 
 fn add_scope(env: Env) -> Env {
-  Env([dict.new(), ..env.scopes])
+  Env(..env, scopes: [dict.new(), ..env.scopes])
 }
 
 fn pop_scope(env: Env) -> Env {
   case env.scopes {
-    [_, ..rest] -> Env(rest)
+    [_, ..rest] -> Env(..env, scopes: rest)
     [] -> env
   }
 }
 
 fn update_var(env: Env, name: String, value: expr.LiteralValue) -> Env {
-  Env(update_var_loop(env.scopes, name, value, []))
+  case get_var_id(env, name) {
+    Some(id) -> Env(..env, store: dict.insert(env.store, id, value))
+    _ -> panic as "missing from scope"
+  }
 }
 
-// I didn't write this...
-fn update_var_loop(
-  remaining: List(Scope),
-  name: String,
-  value: expr.LiteralValue,
-  seen: List(Scope),
-) -> List(Scope) {
-  case remaining {
-    [] -> panic as "Undefined variable."
-    [hd, ..r] ->
+fn get_var_id(env: Env, name: String) -> Option(Int) {
+  case env.scopes {
+    [] -> None
+    [hd, ..r] -> {
       case dict.get(hd, name) {
-        Ok(_) -> {
-          let updated = dict.insert(hd, name, value)
-          list.append(list.reverse(seen), [updated, ..r])
-        }
-        _ -> update_var_loop(r, name, value, [hd, ..seen])
+        Ok(id) -> Some(id)
+        _ -> get_var_id(Env(..env, scopes: r), name)
       }
+    }
   }
 }
 
 fn get_var(env: Env, name: String) -> expr.LiteralValue {
-  case env.scopes {
-    [] -> panic as "Undefined variable."
-    [hd, ..r] -> {
-      case dict.get(hd, name) {
+  case get_var_id(env, name) {
+    Some(id) -> {
+      case dict.get(env.store, id) {
         Ok(val) -> val
-        _ -> get_var(Env(r), name)
+        _ -> panic as "missing from store"
       }
     }
+    _ -> panic as "missing from scope"
   }
 }
 
