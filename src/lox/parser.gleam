@@ -185,6 +185,12 @@ fn parse_declaration(state: ParseState) -> #(Declaration, ParseState) {
       let s = expr.Statement(while_declr)
       #(s, post_while_state)
     }
+    token.Return -> {
+      let #(expr, post_expr_state) = parse_expression(state1)
+      let decl = expr.ReturnStmt(expr)
+      let s = expr.Statement(decl)
+      #(s, post_expr_state)
+    }
     _ -> {
       let #(expr, new_state) = parse_expression(state)
       let state =

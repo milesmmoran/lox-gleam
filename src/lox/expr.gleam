@@ -14,6 +14,7 @@ pub type Statement {
   BlockStmt(declarations: List(Declaration))
   IfStmt(cond: Expr, then_branch: Declaration, else_branch: Option(Declaration))
   WhileStmt(cond: Expr, body: Declaration)
+  ReturnStmt(expr: Expr)
   ForStmt(
     init: Option(Declaration),
     cond: Option(Expr),
