@@ -30,6 +30,7 @@ pub type Expr {
   Grouping(expr: Expr)
   Identifier(name: String)
   Assignment(name: String, expr: Expr)
+  Call(callee: Expr, paren: Token, arguments: List(Expr))
 }
 
 pub type LiteralValue {

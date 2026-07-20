@@ -366,7 +366,7 @@ fn parse_unary(state: ParseState) -> #(Expr, ParseState) {
       let #(operand, state) = parse_unary(ParseState(..state, tokens: r))
       #(expr.Unary(hd, operand), state)
     }
-    _ -> parse_primary(state)
+    _ -> parse_call(state)
   }
 }
 
@@ -403,5 +403,48 @@ fn parse_primary(state: ParseState) -> #(Expr, ParseState) {
       #(expr.Grouping(inner), state)
     }
     _ -> panic as "empty token list - lexer must emit EOF"
+  }
+}
+
+fn parse_call(state: ParseState) -> #(Expr, ParseState) {
+  let #(left, state2) = parse_primary(state)
+  parse_call_loop(left, state2)
+}
+
+fn parse_call_loop(left: Expr, state: ParseState) -> #(Expr, ParseState) {
+  case peek(state).type_ {
+    token.LeftParen -> {
+      let state2 = consume(state, token.LeftParen, "")
+      let #(expressions, state3, t) = parse_call_args(state2, [])
+      let call = expr.Call(left, t, expressions)
+      parse_call_loop(call, state3)
+    }
+    _ -> #(left, state)
+  }
+}
+
+fn parse_call_args(
+  state: ParseState,
+  args: List(Expr),
+) -> #(List(Expr), ParseState, Token) {
+  let next = peek(state)
+  case next.type_ {
+    token.RightParen -> {
+      let state2 = consume(state, token.RightParen, "")
+      #(list.reverse(args), state2, next)
+    }
+    _ -> {
+      let #(expr, state2) = parse_expression(state)
+      case peek(state2).type_ {
+        token.Comma -> {
+          let state3 = consume(state2, token.Comma, "")
+          parse_call_args(state3, [expr, ..args])
+        }
+        token.RightParen -> {
+          parse_call_args(state2, [expr, ..args])
+        }
+        _ -> panic
+      }
+    }
   }
 }
