@@ -92,6 +92,7 @@ fn eval_statement(
       let e = add_var(env, name, expr.NilVal)
       // reserve slot with placeholder
       let fn_val = expr.FunVal(name, params, body, e)
+
       // closure sees name → slot
       let ee = update_var(e, name, fn_val)
       #(None, ee)
@@ -189,18 +190,30 @@ fn eval_expr(e: Expr, env: Env) -> #(expr.LiteralValue, Env) {
     expr.Call(callee, _, args) -> {
       let #(func, new_env) = eval_expr(callee, env)
       case func {
-        expr.FunVal(name, params, body, closure) -> {
+        expr.FunVal(_, params, body, closure) -> {
           let #(evaled_args, callee_env) = eval_args(args, new_env, [])
-          let c = bind_closure(evaled_args, params, closure)
-          let #(val, new_closure) = eval_statement(body, c)
+          // Use closure's scopes but the current (caller's) store.
+          let call_env =
+            Env(
+              scopes: closure.scopes,
+              store: callee_env.store,
+              next_id: callee_env.next_id,
+            )
+          let c = bind_closure(evaled_args, params, call_env)
+          let #(val, post_body_env) = eval_statement(body, c)
           let v = case val {
             None -> expr.NilVal
             Some(v) -> v
           }
-          let cc = pop_scope(new_closure)
-          let ff = expr.FunVal(..func, env: cc)
-
-          #(v, update_var(callee_env, name, ff))
+          // Propagate store updates back to the caller.
+          #(
+            v,
+            Env(
+              scopes: callee_env.scopes,
+              store: post_body_env.store,
+              next_id: post_body_env.next_id,
+            ),
+          )
         }
         _ -> panic as "not callable"
       }
