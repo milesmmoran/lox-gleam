@@ -87,6 +87,8 @@ fn eval_statement(
       #(None, add_var(env, name, v))
     }
     expr.VarDecl(name, option.None) -> #(None, add_var(env, name, expr.NilVal))
+
+    // TODO: insert self into closure
     expr.FunDecl(name, params, body) -> {
       #(None, add_var(env, name, expr.FunVal(name, params, body, env)))
     }
