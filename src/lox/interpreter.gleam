@@ -16,8 +16,8 @@ fn eval_statements(statements: List(Declaration), env: Env) -> Env {
   case statements {
     [] -> env
     [hd, ..rest] -> {
-      let env = eval_statement(hd, env)
-      eval_statements(rest, env)
+      let #(_, new_env) = eval_statement(hd, env)
+      eval_statements(rest, new_env)
     }
   }
 }
