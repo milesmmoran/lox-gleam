@@ -157,6 +157,21 @@ fn eval_expr(e: Expr, env: Env) -> #(expr.LiteralValue, Env) {
       let #(v, env) = eval_expr(value_expr, env)
       #(v, update_var(env, name, v))
     }
+    expr.Call(callee, _, args) -> {
+      let #(func, new_env) = eval_expr(callee, env)
+      case func {
+        expr.FunVal(params, body, closure) -> {
+          let #(evaled_args, callee_env) = eval_args(args, new_env, [])
+          let c = bind_closure(evaled_args, params, closure)
+          let ff = eval_statement(body, c)
+          // update closure with ff? pop params
+          // statement doesn't return value, but return value may make that possible?
+
+          #(expr.NilVal, callee_env)
+        }
+        _ -> panic as "not callable"
+      }
+    }
     expr.Logical(left, op, right) -> {
       case op.type_ {
         token.Or -> {
@@ -278,5 +293,43 @@ fn is_truthy(v: expr.LiteralValue) -> Bool {
     expr.NilVal -> False
     expr.BoolVal(False) -> False
     _ -> True
+  }
+}
+
+fn eval_args(
+  args: List(expr.Expr),
+  env: Env,
+  acc: List(expr.LiteralValue),
+) -> #(List(expr.LiteralValue), Env) {
+  case args {
+    [hd, ..r] -> {
+      let #(val, e) = eval_expr(hd, env)
+      eval_args(r, e, [val, ..acc])
+    }
+    [] -> #(list.reverse(acc), env)
+  }
+}
+
+fn bind_closure(
+  evaled: List(expr.LiteralValue),
+  params: List(String),
+  closure: Env,
+) -> Env {
+  let cc = add_scope(closure)
+  bind_closure_loop(evaled, params, cc)
+}
+
+fn bind_closure_loop(
+  evaled: List(expr.LiteralValue),
+  params: List(String),
+  closure: Env,
+) -> Env {
+  case evaled, params {
+    [hd, ..r], [hd2, ..r2] -> {
+      let new_env = add_var(closure, hd2, hd)
+      bind_closure_loop(r, r2, new_env)
+    }
+    [], [] -> closure
+    _, _ -> panic as "arity crazy"
   }
 }
