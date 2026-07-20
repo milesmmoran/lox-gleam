@@ -88,9 +88,13 @@ fn eval_statement(
     }
     expr.VarDecl(name, option.None) -> #(None, add_var(env, name, expr.NilVal))
 
-    // TODO: insert self into closure
     expr.FunDecl(name, params, body) -> {
-      #(None, add_var(env, name, expr.FunVal(name, params, body, env)))
+      let e = add_var(env, name, expr.NilVal)
+      // reserve slot with placeholder
+      let fn_val = expr.FunVal(name, params, body, e)
+      // closure sees name → slot
+      let ee = update_var(e, name, fn_val)
+      #(None, ee)
     }
     expr.Statement(expr.ExprStmt(e)) -> {
       let #(_, env) = eval_expr(e, env)
