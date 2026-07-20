@@ -177,11 +177,15 @@ fn eval_expr(e: Expr, env: Env) -> #(expr.LiteralValue, Env) {
         expr.FunVal(params, body, closure) -> {
           let #(evaled_args, callee_env) = eval_args(args, new_env, [])
           let c = bind_closure(evaled_args, params, closure)
-          let ff = eval_statement(body, c)
-          // update closure with ff? pop params
-          // statement doesn't return value, but return value may make that possible?
+          let #(val, new_closure) = eval_statement(body, c)
+          let v = case val {
+            None -> expr.NilVal
+            Some(v) -> v
+          }
+          // we will update the closure for the function with this.
+          let _ = pop_scope(new_closure)
 
-          #(expr.NilVal, callee_env)
+          #(v, callee_env)
         }
         _ -> panic as "not callable"
       }
