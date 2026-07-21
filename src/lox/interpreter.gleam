@@ -245,6 +245,21 @@ fn eval_expr(e: Expr, env: Env) -> #(expr.LiteralValue, Env) {
         _ -> panic
       }
     }
+    //
+    expr.Set(target, name, value) -> {
+      todo
+      // TODO
+      // let #(evaled, e) = eval_expr(target, env)
+      // let #(v, ee) = eval_expr(value, e)
+      // case evaled {
+      //   expr.InstanceVal(_, fields) -> {
+      //     let d = dict.insert(fields, name, v)
+      //     add_var(ee, )
+      //     #(v, ee)
+      //   }
+      //   _ -> panic
+      // }
+    }
     expr.Logical(left, op, right) -> {
       case op.type_ {
         token.Or -> {
