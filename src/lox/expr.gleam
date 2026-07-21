@@ -30,6 +30,7 @@ pub type Expr {
   Unary(op: Token, operand: Expr)
   Literal(value: LiteralValue)
   Grouping(expr: Expr)
+  Get(target: Expr, name: String)
   Identifier(name: String)
   Assignment(name: String, expr: Expr)
   Call(callee: Expr, paren: Token, arguments: List(Expr))

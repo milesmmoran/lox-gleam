@@ -472,6 +472,17 @@ fn parse_call_loop(left: Expr, state: ParseState) -> #(Expr, ParseState) {
       let call = expr.Call(left, t, expressions)
       parse_call_loop(call, state3)
     }
+    token.Dot -> {
+      let #(_, state1) = advance(state)
+      let #(iden, state2) = advance(state1)
+      case iden.type_ {
+        token.Identifier -> {
+          let call = expr.Get(left, iden.lexeme)
+          parse_call_loop(call, state2)
+        }
+        _ -> panic
+      }
+    }
     _ -> #(left, state)
   }
 }
