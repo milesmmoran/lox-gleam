@@ -31,6 +31,7 @@ pub type Expr {
   Literal(value: LiteralValue)
   Grouping(expr: Expr)
   Get(target: Expr, name: String)
+  Set(target: Expr, name: String, value: LiteralValue)
   Identifier(name: String)
   Assignment(name: String, expr: Expr)
   Call(callee: Expr, paren: Token, arguments: List(Expr))
