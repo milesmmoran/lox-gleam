@@ -87,7 +87,17 @@ fn eval_statement(
       #(None, add_var(env, name, v))
     }
     expr.VarDecl(name, option.None) -> #(None, add_var(env, name, expr.NilVal))
-
+    expr.ClassDecl(name, methods) -> {
+      let method_dict =
+        list.fold(methods, dict.new(), fn(acc, m) {
+          case m {
+            expr.FunDecl(mname, _, _) -> dict.insert(acc, mname, m)
+            _ -> acc
+          }
+        })
+      let cl = expr.ClassVal(name, method_dict)
+      #(None, add_var(env, name, cl))
+    }
     expr.FunDecl(name, params, body) -> {
       let e = add_var(env, name, expr.NilVal)
       // reserve slot with placeholder

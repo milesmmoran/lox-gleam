@@ -1,10 +1,11 @@
-import gleam/dict
+import gleam/dict.{type Dict}
 import gleam/option.{type Option}
 import lox/token.{type Token}
 
 pub type Declaration {
   VarDecl(var: String, expr: Option(Expr))
   FunDecl(name: String, params: List(String), body: Declaration)
+  ClassDecl(name: String, methods: List(Declaration))
   Statement(statement: Statement)
 }
 
@@ -40,6 +41,7 @@ pub type LiteralValue {
   BoolVal(Bool)
   NilVal
   FunVal(name: String, params: List(String), body: Declaration, env: Env)
+  ClassVal(name: String, methods: Dict(String, Declaration))
 }
 
 pub type Scope =

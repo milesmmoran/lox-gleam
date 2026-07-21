@@ -86,14 +86,23 @@ fn parse_declaration(state: ParseState) -> #(Declaration, ParseState) {
     }
     token.Fun -> {
       // consume FUN
-      let #(iden, state2) = advance(state1)
-      case iden.type_ {
+      let #(_, state2) = advance(state1)
+      parse_fun(state2)
+    }
+    token.Class -> {
+      let #(hd, state2) = advance(state1)
+      case hd.type_ {
         token.Identifier -> {
-          let state3 = consume(state2, token.LeftParen, "Expecting opening (")
-          let #(args, state4) = parse_fun_arg_loop(state3, [])
-          let #(body, state5) = parse_declaration(state4)
-          let func = expr.FunDecl(iden.lexeme, args, body)
-          #(func, state5)
+          let state3 =
+            consume(
+              state2,
+              token.LeftBrace,
+              "Expected '{' after class whatever.",
+            )
+          let class_name = hd.lexeme
+          let #(methods, state5) = parse_method_loop(state3, [])
+          let st = expr.ClassDecl(class_name, methods)
+          #(st, state5)
         }
         _ -> panic as "expected identifier"
       }
@@ -205,6 +214,38 @@ fn parse_declaration(state: ParseState) -> #(Declaration, ParseState) {
       let decl = expr.Statement(statement)
       #(decl, state)
     }
+  }
+}
+
+fn parse_method_loop(
+  state: ParseState,
+  methods: List(Declaration),
+) -> #(List(Declaration), ParseState) {
+  let hd = peek(state)
+  case hd.type_ {
+    token.RightBrace -> {
+      let state2 =
+        consume(state, token.RightBrace, "Expected ';' after expression.")
+      #(list.reverse(methods), state2)
+    }
+    _ -> {
+      let #(method, state2) = parse_fun(state)
+      parse_method_loop(state2, [method, ..methods])
+    }
+  }
+}
+
+fn parse_fun(state: ParseState) -> #(Declaration, ParseState) {
+  let #(hd, state) = advance(state)
+  case hd.type_ {
+    token.Identifier -> {
+      let state2 = consume(state, token.LeftParen, "Expecting opening (")
+      let #(args, state3) = parse_fun_arg_loop(state2, [])
+      let #(body, state4) = parse_declaration(state3)
+      let func = expr.FunDecl(hd.lexeme, args, body)
+      #(func, state4)
+    }
+    _ -> panic as "expected identifier"
   }
 }
 
