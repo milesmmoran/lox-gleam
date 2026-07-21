@@ -225,6 +225,12 @@ fn eval_expr(e: Expr, env: Env) -> #(expr.LiteralValue, Env) {
             ),
           )
         }
+        expr.ClassVal(class, fields) -> {
+          todo
+        }
+        expr.InstanceVal(class, fields) -> {
+          todo
+        }
         _ -> panic as "not callable"
       }
     }
@@ -341,6 +347,12 @@ fn stringify(v: expr.LiteralValue) -> String {
     expr.NumberVal(n) -> float.to_string(n)
     expr.StringVal(s) -> s
     expr.FunVal(name, _, _, _) -> "Function '" <> name <> "'"
+    expr.ClassVal(_, _) -> "Instance '"
+    expr.InstanceVal(class, _) ->
+      case class {
+        expr.ClassVal(name, _) -> "<instance " <> name <> ">"
+        _ -> "<instance>"
+      }
   }
 }
 
