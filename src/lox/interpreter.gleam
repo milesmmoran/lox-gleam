@@ -232,6 +232,19 @@ fn eval_expr(e: Expr, env: Env) -> #(expr.LiteralValue, Env) {
         _ -> panic as "not callable"
       }
     }
+    expr.Get(target, name) -> {
+      let #(evaled, e) = eval_expr(target, env)
+      case evaled {
+        expr.InstanceVal(_, fields) -> {
+          let v = case dict.get(fields, name) {
+            Ok(e) -> e
+            _ -> panic
+          }
+          #(v, e)
+        }
+        _ -> panic
+      }
+    }
     expr.Logical(left, op, right) -> {
       case op.type_ {
         token.Or -> {
