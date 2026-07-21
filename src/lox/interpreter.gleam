@@ -225,11 +225,9 @@ fn eval_expr(e: Expr, env: Env) -> #(expr.LiteralValue, Env) {
             ),
           )
         }
-        expr.ClassVal(class, fields) -> {
-          todo
-        }
-        expr.InstanceVal(class, fields) -> {
-          todo
+        expr.ClassVal(_class, _fields) -> {
+          let instance = expr.InstanceVal(func, dict.new())
+          #(instance, env)
         }
         _ -> panic as "not callable"
       }
