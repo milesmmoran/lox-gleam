@@ -208,14 +208,10 @@ fn eval_expr(e: Expr, env: Env) -> #(expr.LiteralValue, Env) {
       let #(func, new_env) = eval_expr(callee, env)
       case func {
         expr.FunVal(_, params, body, closure) -> {
-          let #(evaled_args, callee_env) = eval_args(args, new_env, [])
+          let #(evaled_args, env) = eval_args(args, new_env, [])
           // Use closure's scopes but the current (caller's) store.
           let call_env =
-            Env(
-              scopes: closure.scopes,
-              store: callee_env.store,
-              next_id: callee_env.next_id,
-            )
+            Env(scopes: closure.scopes, store: env.store, next_id: env.next_id)
           let c = bind_closure(evaled_args, params, call_env)
           let #(val, post_body_env) = eval_statement(body, c)
           let v = case val {
@@ -226,7 +222,7 @@ fn eval_expr(e: Expr, env: Env) -> #(expr.LiteralValue, Env) {
           #(
             v,
             Env(
-              scopes: callee_env.scopes,
+              scopes: env.scopes,
               store: post_body_env.store,
               next_id: post_body_env.next_id,
             ),
