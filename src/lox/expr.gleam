@@ -47,7 +47,11 @@ pub type LiteralValue {
   BoolVal(Bool)
   NilVal
   FunVal(name: String, params: List(String), body: Declaration, env: Env)
-  ClassVal(name: String, methods: Dict(String, Declaration))
+  ClassVal(
+    name: String,
+    methods: Dict(String, Declaration),
+    superclass: Option(LiteralValue),
+  )
   InstanceVal(id: Int)
   InstanceData(class: LiteralValue, fields: Dict(String, LiteralValue))
 }

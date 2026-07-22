@@ -94,7 +94,17 @@ fn eval_statement(
       #(None, add_var(env, name, v))
     }
     expr.VarDecl(name, option.None) -> #(None, add_var(env, name, expr.NilVal))
-    expr.ClassDecl(name, methods) -> {
+    expr.ClassDecl(name, methods, superclass_name) -> {
+      let superclass = case superclass_name {
+        Some(name) -> {
+          let cl = get_var(env, name)
+          case cl {
+            expr.ClassVal(_, _, _) -> Some(cl)
+            _ -> panic
+          }
+        }
+        None -> None
+      }
       let method_dict =
         list.fold(methods, dict.new(), fn(acc, m) {
           case m {
@@ -102,7 +112,7 @@ fn eval_statement(
             _ -> acc
           }
         })
-      let cl = expr.ClassVal(name, method_dict)
+      let cl = expr.ClassVal(name, method_dict, superclass)
       #(None, add_var(env, name, cl))
     }
     expr.FunDecl(name, params, body) -> {
