@@ -205,29 +205,9 @@ fn eval_expr(e: Expr, env: Env) -> #(expr.LiteralValue, Env) {
       #(v, update_var(env, name, v))
     }
     expr.Call(callee, _, args) -> {
-      let #(func, new_env) = eval_expr(callee, env)
+      let #(func, env) = eval_expr(callee, env)
       case func {
-        expr.FunVal(_, params, body, closure) -> {
-          let #(evaled_args, env) = eval_args(args, new_env, [])
-          // Use closure's scopes but the current (caller's) store.
-          let call_env =
-            Env(scopes: closure.scopes, store: env.store, next_id: env.next_id)
-          let c = bind_closure(evaled_args, params, call_env)
-          let #(val, post_body_env) = eval_statement(body, c)
-          let v = case val {
-            None -> expr.NilVal
-            Some(v) -> v
-          }
-          // Propagate store updates back to the caller.
-          #(
-            v,
-            Env(
-              scopes: env.scopes,
-              store: post_body_env.store,
-              next_id: post_body_env.next_id,
-            ),
-          )
-        }
+        expr.FunVal(_, _, _, _) -> call_func(func, args, env)
         expr.ClassVal(_, methods) -> {
           let instance_id = env.next_id
           let instance = expr.InstanceVal(instance_id)
@@ -237,11 +217,19 @@ fn eval_expr(e: Expr, env: Env) -> #(expr.LiteralValue, Env) {
           // 
           let env = case dict.get(methods, "init") {
             Ok(init_func) -> {
-              let env = add_scope(env)
-              let env = add_var(env, "this", instance)
-              let #(_, env) = eval_statement(init_func, env)
-              let env = pop_scope(env)
-              env
+              case init_func {
+                expr.FunDecl(name, params, body) -> {
+                  let env = add_scope(env)
+                  let env = add_var(env, "this", instance)
+                  // Call Init Func
+                  let f = expr.FunVal(name, params, body, env)
+                  let #(_, env) = call_func(f, [], env)
+                  // evaulate
+                  let env = pop_scope(env)
+                  env
+                }
+                _ -> panic
+              }
             }
             _ -> env
           }
@@ -467,5 +455,36 @@ fn bind_closure_loop(
     }
     [], [] -> closure
     _, _ -> panic as "arity crazy"
+  }
+}
+
+fn call_func(
+  fun: expr.LiteralValue,
+  args: List(expr.Expr),
+  env: Env,
+) -> #(expr.LiteralValue, Env) {
+  case fun {
+    expr.FunVal(_, params, body, closure) -> {
+      let #(evaled_args, env) = eval_args(args, env, [])
+      // Use closure's scopes but the current (caller's) store.
+      let call_env =
+        Env(scopes: closure.scopes, store: env.store, next_id: env.next_id)
+      let c = bind_closure(evaled_args, params, call_env)
+      let #(val, post_body_env) = eval_statement(body, c)
+      let v = case val {
+        None -> expr.NilVal
+        Some(v) -> v
+      }
+      // Propagate store updates back to the caller.
+      #(
+        v,
+        Env(
+          scopes: env.scopes,
+          store: post_body_env.store,
+          next_id: post_body_env.next_id,
+        ),
+      )
+    }
+    _ -> panic
   }
 }
