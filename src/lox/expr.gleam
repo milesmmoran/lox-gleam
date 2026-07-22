@@ -5,7 +5,11 @@ import lox/token.{type Token}
 pub type Declaration {
   VarDecl(var: String, expr: Option(Expr))
   FunDecl(name: String, params: List(String), body: Declaration)
-  ClassDecl(name: String, methods: List(Declaration))
+  ClassDecl(
+    name: String,
+    methods: List(Declaration),
+    superclass: Option(String),
+  )
   Statement(statement: Statement)
 }
 

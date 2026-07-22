@@ -90,19 +90,32 @@ fn parse_declaration(state: ParseState) -> #(Declaration, ParseState) {
       parse_fun(state2)
     }
     token.Class -> {
-      let #(hd, state2) = advance(state1)
+      let #(hd, state) = advance(state1)
       case hd.type_ {
         token.Identifier -> {
-          let state3 =
+          let next = peek(state)
+          let #(superclass, state) = case next.type_ {
+            token.Less -> {
+              let #(_, state) = advance(state)
+              let #(next, state) = advance(state)
+              case next.type_ {
+                token.Identifier -> #(Some(next.lexeme), state)
+                _ -> panic
+              }
+            }
+            _ -> #(None, state)
+          }
+
+          let state =
             consume(
-              state2,
+              state,
               token.LeftBrace,
               "Expected '{' after class whatever.",
             )
           let class_name = hd.lexeme
-          let #(methods, state5) = parse_method_loop(state3, [])
-          let st = expr.ClassDecl(class_name, methods)
-          #(st, state5)
+          let #(methods, state) = parse_method_loop(state, [])
+          let st = expr.ClassDecl(class_name, methods, superclass)
+          #(st, state)
         }
         _ -> panic as "expected identifier"
       }
