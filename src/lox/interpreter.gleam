@@ -206,11 +206,14 @@ fn while_loop(
   }
 }
 
-fn find_method(class: expr.LiteralValue, name: String) -> Option(Declaration) {
+fn find_method(
+  class: expr.LiteralValue,
+  name: String,
+) -> Option(#(Declaration, Option(expr.LiteralValue))) {
   case class {
     expr.ClassVal(_, methods, superclass) ->
       case dict.get(methods, name) {
-        Ok(m) -> Some(m)
+        Ok(m) -> Some(#(m, superclass))
         _ ->
           case superclass {
             Some(parent) -> find_method(parent, name)
@@ -247,7 +250,7 @@ fn eval_expr(e: Expr, env: Env) -> #(expr.LiteralValue, Env) {
           let env = Env(..env, store: store, next_id: env.next_id + 1)
           // 
           let env = case find_method(func, "init") {
-            Some(init_func) -> {
+            Some(#(init_func, _init_superclass)) -> {
               case init_func {
                 expr.FunDecl(name, params, body) -> {
                   let env = add_scope(env)
@@ -283,7 +286,7 @@ fn eval_expr(e: Expr, env: Env) -> #(expr.LiteralValue, Env) {
                   case class {
                     expr.ClassVal(_, _, _) ->
                       case find_method(class, name) {
-                        Some(m) ->
+                        Some(#(m, _method_superclass)) ->
                           case m {
                             expr.FunDecl(name, params, body) -> {
                               let closure = add_scope(e)
