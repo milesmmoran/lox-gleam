@@ -228,12 +228,24 @@ fn eval_expr(e: Expr, env: Env) -> #(expr.LiteralValue, Env) {
             ),
           )
         }
-        expr.ClassVal(_class, _fields) -> {
+        expr.ClassVal(_, methods) -> {
           let instance_id = env.next_id
           let instance = expr.InstanceVal(instance_id)
           let data = expr.InstanceData(func, dict.new())
           let store = dict.insert(env.store, instance_id, data)
-          #(instance, Env(..env, store: store, next_id: instance_id + 1))
+          // 
+          let env = case dict.get(methods, "init") {
+            Ok(init_func) -> {
+              let env = add_scope(env)
+              let env = add_var(env, "this", instance)
+              let #(_, env) = eval_statement(init_func, env)
+              env
+            }
+            _ -> env
+          }
+          let env = pop_scope(env)
+          //
+          #(instance, Env(..env, store: store, next_id: env.next_id + 1))
         }
         _ -> panic as "not callable"
       }
