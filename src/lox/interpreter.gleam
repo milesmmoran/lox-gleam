@@ -3,7 +3,7 @@ import gleam/float
 import gleam/io
 import gleam/list
 import gleam/option.{type Option, None, Some}
-import lox/expr.{type Declaration, type Env, type Expr, Env}
+import lox/expr.{type Declaration, type Env, type Expr, type LiteralValue, Env}
 import lox/token
 
 pub fn eval(decls: List(Declaration)) -> Nil {
@@ -74,6 +74,13 @@ fn get_var(env: Env, name: String) -> expr.LiteralValue {
       }
     }
     _ -> panic as "missing from scope"
+  }
+}
+
+fn get_from_store(env: Env, id: Int) -> expr.LiteralValue {
+  case dict.get(env.store, id) {
+    Ok(val) -> val
+    _ -> panic as "missing from store"
   }
 }
 
@@ -226,8 +233,11 @@ fn eval_expr(e: Expr, env: Env) -> #(expr.LiteralValue, Env) {
           )
         }
         expr.ClassVal(_class, _fields) -> {
-          let instance = expr.InstanceVal(func, dict.new())
-          #(instance, env)
+          let instance_id = env.next_id
+          let instance = expr.InstanceVal(instance_id)
+          let data = expr.InstanceData(func, dict.new())
+          let store = dict.insert(env.store, instance_id, data)
+          #(instance, Env(..env, store: store, next_id: instance_id + 1))
         }
         _ -> panic as "not callable"
       }
@@ -235,30 +245,39 @@ fn eval_expr(e: Expr, env: Env) -> #(expr.LiteralValue, Env) {
     expr.Get(target, name) -> {
       let #(evaled, e) = eval_expr(target, env)
       case evaled {
-        expr.InstanceVal(_, fields) -> {
-          let v = case dict.get(fields, name) {
-            Ok(e) -> e
+        expr.InstanceVal(id) -> {
+          let data = get_from_store(e, id)
+          case data {
+            expr.InstanceData(_, fields) -> {
+              case dict.get(fields, name) {
+                Ok(d) -> #(d, e)
+                _ -> panic
+              }
+            }
             _ -> panic
           }
-          #(v, e)
         }
         _ -> panic
       }
     }
     //
     expr.Set(target, name, value) -> {
-      todo
-      // TODO
-      // let #(evaled, e) = eval_expr(target, env)
-      // let #(v, ee) = eval_expr(value, e)
-      // case evaled {
-      //   expr.InstanceVal(_, fields) -> {
-      //     let d = dict.insert(fields, name, v)
-      //     add_var(ee, )
-      //     #(v, ee)
-      //   }
-      //   _ -> panic
-      // }
+      let #(evaled_target, e) = eval_expr(target, env)
+      let #(new_value, e) = eval_expr(value, e)
+      case evaled_target {
+        expr.InstanceVal(id) -> {
+          let class_data_instance = get_from_store(e, id)
+          case class_data_instance {
+            expr.InstanceData(class, fields) -> {
+              let dd = dict.insert(fields, name, new_value)
+              let stor = dict.insert(e.store, id, expr.InstanceData(class, dd))
+              #(new_value, Env(..e, store: stor))
+            }
+            _ -> panic
+          }
+        }
+        _ -> panic
+      }
     }
     expr.Logical(left, op, right) -> {
       case op.type_ {
@@ -374,11 +393,8 @@ fn stringify(v: expr.LiteralValue) -> String {
     expr.StringVal(s) -> s
     expr.FunVal(name, _, _, _) -> "Function '" <> name <> "'"
     expr.ClassVal(_, _) -> "Instance '"
-    expr.InstanceVal(class, _) ->
-      case class {
-        expr.ClassVal(name, _) -> "<instance " <> name <> ">"
-        _ -> "<instance>"
-      }
+    expr.InstanceData(_, _) -> ""
+    expr.InstanceVal(_) -> "hi"
   }
 }
 

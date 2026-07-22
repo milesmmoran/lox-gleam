@@ -44,7 +44,8 @@ pub type LiteralValue {
   NilVal
   FunVal(name: String, params: List(String), body: Declaration, env: Env)
   ClassVal(name: String, methods: Dict(String, Declaration))
-  InstanceVal(class: LiteralValue, fields: Dict(String, LiteralValue))
+  InstanceVal(id: Int)
+  InstanceData(class: LiteralValue, fields: Dict(String, LiteralValue))
 }
 
 pub type Scope =
