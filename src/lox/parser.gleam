@@ -444,6 +444,7 @@ fn parse_primary(state: ParseState) -> #(Expr, ParseState) {
     token.True -> #(expr.Literal(expr.BoolVal(True)), state)
     token.Nil -> #(expr.Literal(expr.NilVal), state)
     token.Identifier -> #(expr.Identifier(hd.lexeme), state)
+    token.This -> #(expr.Identifier(hd.lexeme), state)
     token.LeftParen -> {
       let #(inner, state) = parse_expression(state)
       let state = case state.tokens {
