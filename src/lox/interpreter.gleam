@@ -94,6 +94,7 @@ fn eval_statement(
       #(None, add_var(env, name, v))
     }
     expr.VarDecl(name, option.None) -> #(None, add_var(env, name, expr.NilVal))
+    // Add closure
     expr.ClassDecl(name, methods, superclass_name) -> {
       let superclass = case superclass_name {
         Some(name) -> {
