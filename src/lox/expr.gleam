@@ -39,6 +39,7 @@ pub type Expr {
   Identifier(name: String)
   Assignment(name: String, expr: Expr)
   Call(callee: Expr, paren: Token, arguments: List(Expr))
+  Super(method: String)
 }
 
 pub type LiteralValue {
