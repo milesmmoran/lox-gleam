@@ -309,7 +309,7 @@ fn parse_assignment(state: ParseState) -> #(Expr, ParseState) {
       let #(expr, state2) = parse_or(state1)
       case left {
         expr.Identifier(name) -> #(expr.Assignment(name, expr), state2)
-        expr.Get(target, name) -> #(expr.Set(target, name, expr), state)
+        expr.Get(target, name) -> #(expr.Set(target, name, expr), state2)
         _ -> panic
       }
     }

@@ -248,10 +248,25 @@ fn eval_expr(e: Expr, env: Env) -> #(expr.LiteralValue, Env) {
         expr.InstanceVal(id) -> {
           let data = get_from_store(e, id)
           case data {
-            expr.InstanceData(_, fields) -> {
+            expr.InstanceData(class, fields) -> {
               case dict.get(fields, name) {
                 Ok(d) -> #(d, e)
-                _ -> panic
+                _ -> {
+                  case class {
+                    expr.ClassVal(_, methods) ->
+                      case dict.get(methods, name) {
+                        Ok(m) ->
+                          case m {
+                            expr.FunDecl(name, params, body) -> {
+                              #(expr.FunVal(name, params, body, e), e)
+                            }
+                            _ -> panic
+                          }
+                        _ -> panic
+                      }
+                    _ -> panic
+                  }
+                }
               }
             }
             _ -> panic
