@@ -100,7 +100,7 @@ fn eval_statement(
           let cl = get_var(env, name)
           case cl {
             expr.ClassVal(_, _, _) -> Some(cl)
-            _ -> panic
+            _ -> panic as "no such class is in scope"
           }
         }
         None -> None
@@ -205,6 +205,21 @@ fn while_loop(
   }
 }
 
+fn find_method(class: expr.LiteralValue, name: String) -> Option(Declaration) {
+  case class {
+    expr.ClassVal(_, methods, superclass) ->
+      case dict.get(methods, name) {
+        Ok(m) -> Some(m)
+        _ ->
+          case superclass {
+            Some(parent) -> find_method(parent, name)
+            None -> None
+          }
+      }
+    _ -> None
+  }
+}
+
 fn eval_expr(e: Expr, env: Env) -> #(expr.LiteralValue, Env) {
   case e {
     expr.Literal(val) -> #(val, env)
@@ -218,15 +233,15 @@ fn eval_expr(e: Expr, env: Env) -> #(expr.LiteralValue, Env) {
       let #(func, env) = eval_expr(callee, env)
       case func {
         expr.FunVal(_, _, _, _) -> call_func(func, args, env)
-        expr.ClassVal(_, methods) -> {
+        expr.ClassVal(_, _, _) -> {
           let instance_id = env.next_id
           let instance = expr.InstanceVal(instance_id)
           let data = expr.InstanceData(func, dict.new())
           let store = dict.insert(env.store, instance_id, data)
           let env = Env(..env, store: store, next_id: env.next_id + 1)
           // 
-          let env = case dict.get(methods, "init") {
-            Ok(init_func) -> {
+          let env = case find_method(func, "init") {
+            Some(init_func) -> {
               case init_func {
                 expr.FunDecl(name, params, body) -> {
                   let env = add_scope(env)
@@ -260,14 +275,14 @@ fn eval_expr(e: Expr, env: Env) -> #(expr.LiteralValue, Env) {
                 Ok(d) -> #(d, e)
                 _ -> {
                   case class {
-                    expr.ClassVal(_, methods) ->
-                      case dict.get(methods, name) {
-                        Ok(m) ->
+                    expr.ClassVal(_, _, _) ->
+                      case find_method(class, name) {
+                        Some(m) ->
                           case m {
                             expr.FunDecl(name, params, body) -> {
-                              let e = add_scope(e)
-                              let e = add_var(e, "this", evaled)
-                              #(expr.FunVal(name, params, body, e), e)
+                              let closure = add_scope(e)
+                              let closure = add_var(closure, "this", evaled)
+                              #(expr.FunVal(name, params, body, closure), e)
                             }
                             _ -> panic
                           }
@@ -416,7 +431,7 @@ fn stringify(v: expr.LiteralValue) -> String {
     expr.NumberVal(n) -> float.to_string(n)
     expr.StringVal(s) -> s
     expr.FunVal(name, _, _, _) -> "Function '" <> name <> "'"
-    expr.ClassVal(_, _) -> "Instance '"
+    expr.ClassVal(_, _, _) -> "Instance '"
     expr.InstanceData(_, _) -> ""
     expr.InstanceVal(_) -> "hi"
   }
