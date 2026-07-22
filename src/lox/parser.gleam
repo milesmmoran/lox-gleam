@@ -457,6 +457,14 @@ fn parse_primary(state: ParseState) -> #(Expr, ParseState) {
     token.True -> #(expr.Literal(expr.BoolVal(True)), state)
     token.Nil -> #(expr.Literal(expr.NilVal), state)
     token.Identifier -> #(expr.Identifier(hd.lexeme), state)
+    token.Super -> {
+      let state = consume(state, token.Dot, "Expected '.' after 'super'.")
+      let #(iden, state) = advance(state)
+      case iden.type_ {
+        token.Identifier -> #(expr.Super(iden.lexeme), state)
+        _ -> panic as "Expected superclass method name."
+      }
+    }
     token.This -> #(expr.Identifier(hd.lexeme), state)
     token.LeftParen -> {
       let #(inner, state) = parse_expression(state)
