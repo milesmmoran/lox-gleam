@@ -3,7 +3,7 @@ import gleam/float
 import gleam/io
 import gleam/list
 import gleam/option.{type Option, None, Some}
-import lox/expr.{type Declaration, type Env, type Expr, type LiteralValue, Env}
+import lox/expr.{type Declaration, type Env, type Expr, Env}
 import lox/token
 
 pub fn eval(decls: List(Declaration)) -> Nil {
@@ -258,6 +258,8 @@ fn eval_expr(e: Expr, env: Env) -> #(expr.LiteralValue, Env) {
                         Ok(m) ->
                           case m {
                             expr.FunDecl(name, params, body) -> {
+                              let e = add_scope(e)
+                              let e = add_var(e, "this", evaled)
                               #(expr.FunVal(name, params, body, e), e)
                             }
                             _ -> panic
