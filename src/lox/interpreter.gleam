@@ -223,7 +223,7 @@ fn eval_expr(e: Expr, env: Env) -> #(expr.LiteralValue, Env) {
                   let env = add_var(env, "this", instance)
                   // Call Init Func
                   let f = expr.FunVal(name, params, body, env)
-                  let #(_, env) = call_func(f, [], env)
+                  let #(_, env) = call_func(f, args, env)
                   // evaulate
                   let env = pop_scope(env)
                   env
