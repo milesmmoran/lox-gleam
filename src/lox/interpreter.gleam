@@ -229,6 +229,11 @@ fn eval_expr(e: Expr, env: Env) -> #(expr.LiteralValue, Env) {
       let #(v, env) = eval_expr(value_expr, env)
       #(v, update_var(env, name, v))
     }
+
+    expr.Super(method) -> {
+      // TODO
+      todo
+    }
     expr.Call(callee, _, args) -> {
       let #(func, env) = eval_expr(callee, env)
       case func {
